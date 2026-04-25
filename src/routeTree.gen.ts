@@ -13,6 +13,8 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppUploadsRouteImport } from './routes/app.uploads'
+import { Route as AppColumnMappingRouteImport } from './routes/app.column-mapping'
+import { Route as AppUploadsFileIdRouteImport } from './routes/app.uploads.$fileId'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -34,31 +36,65 @@ const AppUploadsRoute = AppUploadsRouteImport.update({
   path: '/uploads',
   getParentRoute: () => AppRoute,
 } as any)
+const AppColumnMappingRoute = AppColumnMappingRouteImport.update({
+  id: '/column-mapping',
+  path: '/column-mapping',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUploadsFileIdRoute = AppUploadsFileIdRouteImport.update({
+  id: '/$fileId',
+  path: '/$fileId',
+  getParentRoute: () => AppUploadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/uploads': typeof AppUploadsRoute
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app/uploads': typeof AppUploadsRoute
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app': typeof AppIndexRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/uploads': typeof AppUploadsRoute
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/uploads' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/column-mapping'
+    | '/app/uploads'
+    | '/app/'
+    | '/app/uploads/$fileId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/uploads' | '/app'
-  id: '__root__' | '/' | '/app' | '/app/uploads' | '/app/'
+  to:
+    | '/'
+    | '/app/column-mapping'
+    | '/app/uploads'
+    | '/app'
+    | '/app/uploads/$fileId'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/column-mapping'
+    | '/app/uploads'
+    | '/app/'
+    | '/app/uploads/$fileId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -96,16 +132,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUploadsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/column-mapping': {
+      id: '/app/column-mapping'
+      path: '/column-mapping'
+      fullPath: '/app/column-mapping'
+      preLoaderRoute: typeof AppColumnMappingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/uploads/$fileId': {
+      id: '/app/uploads/$fileId'
+      path: '/$fileId'
+      fullPath: '/app/uploads/$fileId'
+      preLoaderRoute: typeof AppUploadsFileIdRouteImport
+      parentRoute: typeof AppUploadsRoute
+    }
   }
 }
 
+interface AppUploadsRouteChildren {
+  AppUploadsFileIdRoute: typeof AppUploadsFileIdRoute
+}
+
+const AppUploadsRouteChildren: AppUploadsRouteChildren = {
+  AppUploadsFileIdRoute: AppUploadsFileIdRoute,
+}
+
+const AppUploadsRouteWithChildren = AppUploadsRoute._addFileChildren(
+  AppUploadsRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppUploadsRoute: typeof AppUploadsRoute
+  AppColumnMappingRoute: typeof AppColumnMappingRoute
+  AppUploadsRoute: typeof AppUploadsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppUploadsRoute: AppUploadsRoute,
+  AppColumnMappingRoute: AppColumnMappingRoute,
+  AppUploadsRoute: AppUploadsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }
 
