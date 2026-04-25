@@ -14,7 +14,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppWorkspacesRouteImport } from './routes/app.workspaces'
 import { Route as AppUploadsRouteImport } from './routes/app.uploads'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRunsRouteImport } from './routes/app.runs'
+import { Route as AppHealthRouteImport } from './routes/app.health'
 import { Route as AppExportsRouteImport } from './routes/app.exports'
 import { Route as AppExceptionsRouteImport } from './routes/app.exceptions'
 import { Route as AppColumnMappingRouteImport } from './routes/app.column-mapping'
@@ -46,9 +48,19 @@ const AppUploadsRoute = AppUploadsRouteImport.update({
   path: '/uploads',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRunsRoute = AppRunsRouteImport.update({
   id: '/runs',
   path: '/runs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHealthRoute = AppHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => AppRoute,
 } as any)
 const AppExportsRoute = AppExportsRouteImport.update({
@@ -83,7 +95,9 @@ export interface FileRoutesByFullPath {
   '/app/column-mapping': typeof AppColumnMappingRoute
   '/app/exceptions': typeof AppExceptionsRoute
   '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
   '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
   '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/workspaces': typeof AppWorkspacesRoute
   '/app/': typeof AppIndexRoute
@@ -95,7 +109,9 @@ export interface FileRoutesByTo {
   '/app/column-mapping': typeof AppColumnMappingRoute
   '/app/exceptions': typeof AppExceptionsRoute
   '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
   '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
   '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/workspaces': typeof AppWorkspacesRoute
   '/app': typeof AppIndexRoute
@@ -109,7 +125,9 @@ export interface FileRoutesById {
   '/app/column-mapping': typeof AppColumnMappingRoute
   '/app/exceptions': typeof AppExceptionsRoute
   '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
   '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
   '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/workspaces': typeof AppWorkspacesRoute
   '/app/': typeof AppIndexRoute
@@ -124,7 +142,9 @@ export interface FileRouteTypes {
     | '/app/column-mapping'
     | '/app/exceptions'
     | '/app/exports'
+    | '/app/health'
     | '/app/runs'
+    | '/app/settings'
     | '/app/uploads'
     | '/app/workspaces'
     | '/app/'
@@ -136,7 +156,9 @@ export interface FileRouteTypes {
     | '/app/column-mapping'
     | '/app/exceptions'
     | '/app/exports'
+    | '/app/health'
     | '/app/runs'
+    | '/app/settings'
     | '/app/uploads'
     | '/app/workspaces'
     | '/app'
@@ -149,7 +171,9 @@ export interface FileRouteTypes {
     | '/app/column-mapping'
     | '/app/exceptions'
     | '/app/exports'
+    | '/app/health'
     | '/app/runs'
+    | '/app/settings'
     | '/app/uploads'
     | '/app/workspaces'
     | '/app/'
@@ -199,11 +223,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUploadsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/runs': {
       id: '/app/runs'
       path: '/runs'
       fullPath: '/app/runs'
       preLoaderRoute: typeof AppRunsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/health': {
+      id: '/app/health'
+      path: '/health'
+      fullPath: '/app/health'
+      preLoaderRoute: typeof AppHealthRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/exports': {
@@ -271,7 +309,9 @@ interface AppRouteChildren {
   AppColumnMappingRoute: typeof AppColumnMappingRoute
   AppExceptionsRoute: typeof AppExceptionsRoute
   AppExportsRoute: typeof AppExportsRoute
+  AppHealthRoute: typeof AppHealthRoute
   AppRunsRoute: typeof AppRunsRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRoute
   AppUploadsRoute: typeof AppUploadsRouteWithChildren
   AppWorkspacesRoute: typeof AppWorkspacesRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -281,7 +321,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppColumnMappingRoute: AppColumnMappingRoute,
   AppExceptionsRoute: AppExceptionsRoute,
   AppExportsRoute: AppExportsRoute,
+  AppHealthRoute: AppHealthRoute,
   AppRunsRoute: AppRunsRouteWithChildren,
+  AppSettingsRoute: AppSettingsRoute,
   AppUploadsRoute: AppUploadsRouteWithChildren,
   AppWorkspacesRoute: AppWorkspacesRoute,
   AppIndexRoute: AppIndexRoute,
