@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, statusTone } from "@/components/app/ui";
-import { uploads, filePreviewRows } from "@/data/mock";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { uploadsApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/app/uploads/$fileId")({
   head: () => ({ meta: [{ title: "File preview · ReconPilot" }] }),
@@ -10,7 +11,21 @@ export const Route = createFileRoute("/app/uploads/$fileId")({
 
 function FilePreview() {
   const { fileId } = Route.useParams();
-  const file = uploads.find(u => u.id === fileId) ?? uploads[0];
+
+  const { data: file, isLoading: fileLoading } = useQuery({
+    queryKey: ["upload", fileId],
+    queryFn: () => uploadsApi.get(fileId),
+  });
+
+  const { data: preview, isLoading: previewLoading } = useQuery({
+    queryKey: ["upload-preview", fileId],
+    queryFn: () => uploadsApi.getPreview(fileId),
+  });
+
+  if (fileLoading || !file) return <div className="p-20 flex justify-center"><Loader2 className="animate-spin" /></div>;
+
+  const previewRows = preview?.rows || [];
+  const previewCols = preview?.column_names || [];
 
   return (
     <PageContainer>
@@ -21,32 +36,44 @@ function FilePreview() {
         title={file.file_name}
         description="Inspect parsed contents before mapping columns."
         actions={
-          <Link to="/app/column-mapping"><Btn><Sparkles className="size-4" /> Suggest column mapping</Btn></Link>
+          <Link to="/app/column-mapping" search={{ fileId }}>
+            <Btn><Sparkles className="size-4" /> Suggest column mapping</Btn>
+          </Link>
         }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
         <Card><div className="text-[12px] text-muted-foreground">Category</div><div className="text-[14px] font-medium mt-1">{file.file_category}</div></Card>
         <Card><div className="text-[12px] text-muted-foreground">Status</div><div className="mt-1"><Badge tone={statusTone(file.status)}>{file.status}</Badge></div></Card>
-        <Card><div className="text-[12px] text-muted-foreground">Rows</div><div className="text-[14px] font-medium mt-1 tabular-nums">{file.rows.toLocaleString()}</div></Card>
+        <Card><div className="text-[12px] text-muted-foreground">Rows</div><div className="text-[14px] font-medium mt-1 tabular-nums">{(file.row_count ?? 0).toLocaleString()}</div></Card>
         <Card><div className="text-[12px] text-muted-foreground">File ID</div><div className="text-[12px] font-mono mt-1 truncate">{file.id}</div></Card>
       </div>
 
       <div className="text-[12px] text-muted-foreground mb-2">Preview · first 5 rows</div>
-      <Table>
-        <thead>
-          <tr>
-            {Object.keys(filePreviewRows[0]).map(k => <Th key={k}>{k}</Th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {filePreviewRows.map((r, i) => (
-            <tr key={i} className="hover:bg-[#FAFAFA]">
-              {Object.values(r).map((v, j) => <Td key={j} className="font-mono text-[12px]">{String(v)}</Td>)}
+      {previewLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-muted-foreground" /></div>
+      ) : previewRows.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground border border-dashed rounded-[12px]">No preview data available for this file yet.</div>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              {previewCols.map(k => <Th key={k}>{k}</Th>)}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {previewRows.map((r: any, i) => (
+              <tr key={i} className="hover:bg-[#FAFAFA]">
+                {previewCols.map((col, j) => (
+                  <Td key={j} className="font-mono text-[11.5px] truncate max-w-[200px]">
+                    {String(r[col] ?? "")}
+                  </Td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
     </PageContainer>
   );
 }

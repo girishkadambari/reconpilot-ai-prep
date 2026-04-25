@@ -1,4 +1,6 @@
 import { ReactNode } from "react";
+import { Loader2 } from "lucide-react";
+import { format, isValid } from "date-fns";
 
 export function PageContainer({ children }: { children: ReactNode }) {
   return <div className="px-8 py-7 max-w-[1400px] mx-auto w-full">{children}</div>;
@@ -41,9 +43,9 @@ const TONE: Record<Tone, string> = {
   neutral: "bg-secondary text-foreground border-border",
   success: "bg-[oklch(0.95_0.06_148)] text-[#15803D] border-[oklch(0.85_0.1_148)]",
   warning: "bg-[oklch(0.97_0.08_85)] text-[#B45309] border-[oklch(0.88_0.12_85)]",
-  error:   "bg-[oklch(0.96_0.06_25)] text-[#B91C1C] border-[oklch(0.88_0.12_25)]",
-  info:    "bg-[oklch(0.96_0.05_260)] text-[#1D4ED8] border-[oklch(0.88_0.08_260)]",
-  purple:  "bg-[oklch(0.96_0.05_295)] text-[#6D28D9] border-[oklch(0.88_0.08_295)]",
+  error: "bg-[oklch(0.96_0.06_25)] text-[#B91C1C] border-[oklch(0.88_0.12_25)]",
+  info: "bg-[oklch(0.96_0.05_260)] text-[#1D4ED8] border-[oklch(0.88_0.08_260)]",
+  purple: "bg-[oklch(0.96_0.05_295)] text-[#6D28D9] border-[oklch(0.88_0.08_295)]",
 };
 export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: Tone }) {
   return (
@@ -54,10 +56,11 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 }
 
 export function Btn({
-  children, variant = "primary", size = "md", className = "", ...rest
+  children, variant = "primary", size = "md", className = "", loading = false, ...rest
 }: {
   children: ReactNode; variant?: "primary" | "secondary" | "ghost" | "destructive";
   size?: "sm" | "md";
+  loading?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const sizes = size === "sm" ? "h-8 px-3 text-[12.5px]" : "h-9 px-3.5 text-[13px]";
   const variants = {
@@ -67,7 +70,12 @@ export function Btn({
     destructive: "bg-destructive text-white hover:bg-destructive/90 border border-destructive",
   }[variant];
   return (
-    <button className={["inline-flex items-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:opacity-50", sizes, variants, className].join(" ")} {...rest}>
+    <button
+      className={["inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:opacity-50", sizes, variants, className].join(" ")}
+      disabled={loading || rest.disabled}
+      {...rest}
+    >
+      {loading && <Loader2 className="size-3.5 animate-spin" />}
       {children}
     </button>
   );
@@ -186,4 +194,11 @@ export function statusTone(s: string) {
   if (["RUNNING", "PENDING_REVIEW", "PARSING", "QUEUED", "OPEN", "PARSED"].includes(s)) return "warning";
   if (["FAILED", "PARSE_FAILED", "REJECTED", "degraded"].includes(s)) return "error";
   return "neutral";
+}
+
+export function formatDate(dateStr: string | null | undefined, fmt: string = "MMM d, h:mm a") {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (!isValid(d)) return "—";
+  return format(d, fmt);
 }

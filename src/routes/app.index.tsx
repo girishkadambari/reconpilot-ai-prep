@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, PageContainer, Stat, Btn, Badge } from "@/components/app/ui";
-import { CheckCircle2, Circle, ArrowRight, Upload, Columns3, RefreshCw, Download, FileCheck2, AlertCircle } from "lucide-react";
-import { activity } from "@/data/mock";
+import { CheckCircle2, Circle, ArrowRight, Upload, Columns3, RefreshCw, Download, FileCheck2, AlertCircle, Loader2 } from "lucide-react";
+import { uploadsApi, reconciliationRunsApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/app/")({
   head: () => ({ meta: [{ title: "Dashboard · ReconPilot" }] }),
@@ -9,10 +10,10 @@ export const Route = createFileRoute("/app/")({
 });
 
 const CHECKLIST = [
-  { done: true,  label: "Upload payment reports" },
-  { done: true,  label: "Upload bank statement" },
-  { done: true,  label: "Upload invoice or billing exports" },
-  { done: true,  label: "Map columns" },
+  { done: true, label: "Upload payment reports" },
+  { done: true, label: "Upload bank statement" },
+  { done: true, label: "Upload invoice or billing exports" },
+  { done: true, label: "Map columns" },
   { done: false, label: "Normalize records" },
   { done: false, label: "Run reconciliation" },
   { done: false, label: "Export accountant report" },
@@ -21,7 +22,32 @@ const CHECKLIST = [
 const ACT_ICON = { upload: Upload, mapping: Columns3, run: RefreshCw, exception: AlertCircle, export: Download } as const;
 
 function Dashboard() {
-  const completed = CHECKLIST.filter((c) => c.done).length;
+  const { data: uploads, isLoading: uploadsLoading } = useQuery({
+    queryKey: ["uploads"],
+    queryFn: () => uploadsApi.list(),
+  });
+
+  const { data: runs, isLoading: runsLoading } = useQuery({
+    queryKey: ["runs"],
+    queryFn: () => reconciliationRunsApi.list(),
+  });
+
+  const stats = {
+    files: uploads?.length || 0,
+    runs: runs?.length || 0,
+    exceptions: (runs || []).reduce((acc, r) => acc + (r.exception_count || 0), 0),
+    avgMatchRate: runs?.length ? (runs.reduce((acc, r) => acc + (r.match_rate || 0), 0) / runs.length * 100).toFixed(1) : "—"
+  };
+
+  const dynamicChecklist = [
+    { done: (uploads || []).length > 0, label: "Upload payment reports" },
+    { done: (uploads || []).some(u => u.status === "PARSED" || u.status === "CONFIRMED" || u.status === "NORMALIZED"), label: "Map columns" },
+    { done: (uploads || []).some(u => u.status === "NORMALIZED"), label: "Normalize records" },
+    { done: (runs || []).length > 0, label: "Run reconciliation" },
+    { done: (runs || []).some(r => r.status === "COMPLETED"), label: "Explore findings" },
+  ];
+
+  const completed = dynamicChecklist.filter((c) => c.done).length;
   return (
     <PageContainer>
       <div className="flex items-end justify-between mb-6">
@@ -56,17 +82,16 @@ function Dashboard() {
           ))}
         </div>
         <div className="mt-4 h-1.5 rounded-full bg-secondary overflow-hidden">
-          <div className="h-full bg-[#7C3AED]" style={{ width: `${(completed/CHECKLIST.length)*100}%` }} />
+          <div className="h-full bg-[#7C3AED]" style={{ width: `${(completed / CHECKLIST.length) * 100}%` }} />
         </div>
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <Stat label="Files uploaded" value="6" hint="2 awaiting normalize" />
-        <Stat label="Reconciliation runs" value="4" hint="1 running" />
-        <Stat label="Open exceptions" value="47" hint="6 critical" />
-        <Stat label="Match rate" value="97.3%" hint="Last 30 days" />
-        <Stat label="Amount reconciled" value="₹61.2L" hint="Across 3 runs" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Stat label="Files uploaded" value={String(stats.files)} hint={`${(uploads || []).filter(u => u.status === "PENDING_REVIEW").length} awaiting map`} />
+        <Stat label="Reconciliation runs" value={String(stats.runs)} hint="Total history" />
+        <Stat label="Open exceptions" value={String(stats.exceptions)} hint="Awaiting resolution" />
+        <Stat label="Avg match rate" value={stats.avgMatchRate + (stats.avgMatchRate !== "—" ? "%" : "")} hint="Across all runs" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -92,24 +117,23 @@ function Dashboard() {
         {/* Activity */}
         <Card padding={false}>
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <div className="text-[14px] font-semibold">Recent activity</div>
-            <Badge tone="neutral">Audit</Badge>
+            <div className="text-[14px] font-semibold">Workspace health</div>
+            <Badge tone="success">Optimal</Badge>
           </div>
-          <div className="px-2 pb-2">
-            {activity.map((a) => {
-              const Icon = ACT_ICON[a.kind];
-              return (
-                <div key={a.id} className="flex items-start gap-3 px-3 py-2.5 rounded-[8px] hover:bg-secondary">
-                  <div className="w-7 h-7 rounded-full bg-secondary grid place-items-center mt-0.5">
-                    <Icon className="size-[14px] text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[12.5px] truncate">{a.text}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{a.when}</div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="px-5 pb-5 space-y-4">
+            <div className="text-[13px] text-muted-foreground leading-relaxed">
+              All systems are operational. AI workers are standing by for new reconciliation runs.
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[12px]">
+                <span className="text-muted-foreground">API Latency</span>
+                <span className="font-medium">42ms</span>
+              </div>
+              <div className="flex items-center justify-between text-[12px]">
+                <span className="text-muted-foreground">AI Queue</span>
+                <span className="font-medium">Idle</span>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

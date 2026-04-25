@@ -20,6 +20,8 @@ import { Route as AppHealthRouteImport } from './routes/app.health'
 import { Route as AppExportsRouteImport } from './routes/app.exports'
 import { Route as AppExceptionsRouteImport } from './routes/app.exceptions'
 import { Route as AppColumnMappingRouteImport } from './routes/app.column-mapping'
+import { Route as AppUploadsIndexRouteImport } from './routes/app.uploads.index'
+import { Route as AppRunsIndexRouteImport } from './routes/app.runs.index'
 import { Route as AppUploadsFileIdRouteImport } from './routes/app.uploads.$fileId'
 import { Route as AppRunsRunIdRouteImport } from './routes/app.runs.$runId'
 
@@ -78,6 +80,16 @@ const AppColumnMappingRoute = AppColumnMappingRouteImport.update({
   path: '/column-mapping',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUploadsIndexRoute = AppUploadsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppUploadsRoute,
+} as any)
+const AppRunsIndexRoute = AppRunsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRunsRoute,
+} as any)
 const AppUploadsFileIdRoute = AppUploadsFileIdRouteImport.update({
   id: '/$fileId',
   path: '/$fileId',
@@ -103,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
   '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
+  '/app/runs/': typeof AppRunsIndexRoute
+  '/app/uploads/': typeof AppUploadsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,13 +124,13 @@ export interface FileRoutesByTo {
   '/app/exceptions': typeof AppExceptionsRoute
   '/app/exports': typeof AppExportsRoute
   '/app/health': typeof AppHealthRoute
-  '/app/runs': typeof AppRunsRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
-  '/app/uploads': typeof AppUploadsRouteWithChildren
   '/app/workspaces': typeof AppWorkspacesRoute
   '/app': typeof AppIndexRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
   '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
+  '/app/runs': typeof AppRunsIndexRoute
+  '/app/uploads': typeof AppUploadsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,6 +147,8 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/app/runs/$runId': typeof AppRunsRunIdRoute
   '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
+  '/app/runs/': typeof AppRunsIndexRoute
+  '/app/uploads/': typeof AppUploadsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,6 +166,8 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/runs/$runId'
     | '/app/uploads/$fileId'
+    | '/app/runs/'
+    | '/app/uploads/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -157,13 +175,13 @@ export interface FileRouteTypes {
     | '/app/exceptions'
     | '/app/exports'
     | '/app/health'
-    | '/app/runs'
     | '/app/settings'
-    | '/app/uploads'
     | '/app/workspaces'
     | '/app'
     | '/app/runs/$runId'
     | '/app/uploads/$fileId'
+    | '/app/runs'
+    | '/app/uploads'
   id:
     | '__root__'
     | '/'
@@ -179,6 +197,8 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/runs/$runId'
     | '/app/uploads/$fileId'
+    | '/app/runs/'
+    | '/app/uploads/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -265,6 +285,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppColumnMappingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/uploads/': {
+      id: '/app/uploads/'
+      path: '/'
+      fullPath: '/app/uploads/'
+      preLoaderRoute: typeof AppUploadsIndexRouteImport
+      parentRoute: typeof AppUploadsRoute
+    }
+    '/app/runs/': {
+      id: '/app/runs/'
+      path: '/'
+      fullPath: '/app/runs/'
+      preLoaderRoute: typeof AppRunsIndexRouteImport
+      parentRoute: typeof AppRunsRoute
+    }
     '/app/uploads/$fileId': {
       id: '/app/uploads/$fileId'
       path: '/$fileId'
@@ -284,10 +318,12 @@ declare module '@tanstack/react-router' {
 
 interface AppRunsRouteChildren {
   AppRunsRunIdRoute: typeof AppRunsRunIdRoute
+  AppRunsIndexRoute: typeof AppRunsIndexRoute
 }
 
 const AppRunsRouteChildren: AppRunsRouteChildren = {
   AppRunsRunIdRoute: AppRunsRunIdRoute,
+  AppRunsIndexRoute: AppRunsIndexRoute,
 }
 
 const AppRunsRouteWithChildren =
@@ -295,10 +331,12 @@ const AppRunsRouteWithChildren =
 
 interface AppUploadsRouteChildren {
   AppUploadsFileIdRoute: typeof AppUploadsFileIdRoute
+  AppUploadsIndexRoute: typeof AppUploadsIndexRoute
 }
 
 const AppUploadsRouteChildren: AppUploadsRouteChildren = {
   AppUploadsFileIdRoute: AppUploadsFileIdRoute,
+  AppUploadsIndexRoute: AppUploadsIndexRoute,
 }
 
 const AppUploadsRouteWithChildren = AppUploadsRoute._addFileChildren(

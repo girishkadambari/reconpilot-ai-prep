@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/app/Shell";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const Route = createFileRoute("/app")({
   head: () => ({ meta: [{ title: "ReconPilot" }] }),
-  component: Shell,
+  component: () => (
+    <AuthGuard>
+      <Shell />
+    </AuthGuard>
+  ),
 });

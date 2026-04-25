@@ -1,9 +1,11 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Upload, Columns3, RefreshCw, AlertTriangle,
-  Download, Building2, Settings, Activity, Bell, MessageSquare, ChevronDown, Search
+  Download, Building2, Settings, Activity, Bell, MessageSquare, ChevronDown, Search, LogOut
 } from "lucide-react";
-import { currentUser, workspaces } from "@/data/mock";
+import { useAuth } from "@/components/auth/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { uploadsApi } from "@/lib/api";
 
 const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -19,7 +21,17 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
 
 export function Shell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const activeWs = workspaces.find((w) => w.active)!;
+  const { user, workspace, logout } = useAuth();
+  
+  const { data: uploads } = useQuery({
+    queryKey: ["uploads"],
+    queryFn: () => uploadsApi.list(),
+    enabled: !!user,
+  });
+
+  const mappingCount = (uploads || []).filter(u => u.status === 'PARSED').length;
+
+  if (!user || !workspace) return null;
 
   return (
     <div className="min-h-screen flex bg-[#FAFAFA]">
@@ -36,7 +48,7 @@ export function Shell() {
         <button className="mx-3 mt-3 flex items-center justify-between gap-2 px-3 py-2 rounded-[10px] border border-border bg-white hover:bg-secondary text-left">
           <div className="min-w-0">
             <div className="text-[11px] text-muted-foreground">Workspace</div>
-            <div className="text-[13px] font-medium truncate">{activeWs.name}</div>
+            <div className="text-[13px] font-medium truncate">{workspace.name}</div>
           </div>
           <ChevronDown className="size-4 text-muted-foreground" />
         </button>
@@ -57,7 +69,12 @@ export function Shell() {
               >
                 {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-[#7C3AED]" />}
                 <Icon className={["size-[15px]", active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"].join(" ")} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.label === "Column Mapping" && mappingCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-bold">
+                    {mappingCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -92,8 +109,12 @@ export function Shell() {
               <Bell className="size-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
             </button>
-            <button className="h-9 w-9 grid place-items-center rounded-full bg-foreground text-white text-[12px] font-semibold">
-              {currentUser.avatar_initials}
+            <button 
+              className="h-9 w-9 grid place-items-center rounded-full bg-foreground text-white text-[12px] font-semibold hover:opacity-80 transition-opacity"
+              onClick={logout}
+              title="Logout"
+            >
+              {user.email[0].toUpperCase()}
             </button>
           </div>
         </header>
