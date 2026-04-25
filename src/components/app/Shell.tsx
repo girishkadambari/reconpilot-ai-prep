@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { currentUser, workspaces } from "@/data/mock";
 
-const NAV = [
+const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/uploads", label: "Uploads", icon: Upload },
   { to: "/app/column-mapping", label: "Column Mapping", icon: Columns3 },
@@ -15,7 +15,7 @@ const NAV = [
   { to: "/app/workspaces", label: "Workspaces", icon: Building2 },
   { to: "/app/settings", label: "Settings", icon: Settings },
   { to: "/app/health", label: "Service Health", icon: Activity },
-] as const;
+];
 
 export function Shell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
