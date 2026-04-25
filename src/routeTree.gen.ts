@@ -9,38 +9,192 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppWorkspacesRouteImport } from './routes/app.workspaces'
+import { Route as AppUploadsRouteImport } from './routes/app.uploads'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppRunsRouteImport } from './routes/app.runs'
+import { Route as AppHealthRouteImport } from './routes/app.health'
+import { Route as AppExportsRouteImport } from './routes/app.exports'
+import { Route as AppExceptionsRouteImport } from './routes/app.exceptions'
+import { Route as AppColumnMappingRouteImport } from './routes/app.column-mapping'
+import { Route as AppUploadsFileIdRouteImport } from './routes/app.uploads.$fileId'
+import { Route as AppRunsRunIdRouteImport } from './routes/app.runs.$runId'
 
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkspacesRoute = AppWorkspacesRouteImport.update({
+  id: '/workspaces',
+  path: '/workspaces',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUploadsRoute = AppUploadsRouteImport.update({
+  id: '/uploads',
+  path: '/uploads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRunsRoute = AppRunsRouteImport.update({
+  id: '/runs',
+  path: '/runs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHealthRoute = AppHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExportsRoute = AppExportsRouteImport.update({
+  id: '/exports',
+  path: '/exports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExceptionsRoute = AppExceptionsRouteImport.update({
+  id: '/exceptions',
+  path: '/exceptions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppColumnMappingRoute = AppColumnMappingRouteImport.update({
+  id: '/column-mapping',
+  path: '/column-mapping',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUploadsFileIdRoute = AppUploadsFileIdRouteImport.update({
+  id: '/$fileId',
+  path: '/$fileId',
+  getParentRoute: () => AppUploadsRoute,
+} as any)
+const AppRunsRunIdRoute = AppRunsRunIdRouteImport.update({
+  id: '/$runId',
+  path: '/$runId',
+  getParentRoute: () => AppRunsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/exceptions': typeof AppExceptionsRoute
+  '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
+  '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
+  '/app/workspaces': typeof AppWorkspacesRoute
+  '/app/': typeof AppIndexRoute
+  '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/exceptions': typeof AppExceptionsRoute
+  '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
+  '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
+  '/app/workspaces': typeof AppWorkspacesRoute
+  '/app': typeof AppIndexRoute
+  '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/column-mapping': typeof AppColumnMappingRoute
+  '/app/exceptions': typeof AppExceptionsRoute
+  '/app/exports': typeof AppExportsRoute
+  '/app/health': typeof AppHealthRoute
+  '/app/runs': typeof AppRunsRouteWithChildren
+  '/app/settings': typeof AppSettingsRoute
+  '/app/uploads': typeof AppUploadsRouteWithChildren
+  '/app/workspaces': typeof AppWorkspacesRoute
+  '/app/': typeof AppIndexRoute
+  '/app/runs/$runId': typeof AppRunsRunIdRoute
+  '/app/uploads/$fileId': typeof AppUploadsFileIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/column-mapping'
+    | '/app/exceptions'
+    | '/app/exports'
+    | '/app/health'
+    | '/app/runs'
+    | '/app/settings'
+    | '/app/uploads'
+    | '/app/workspaces'
+    | '/app/'
+    | '/app/runs/$runId'
+    | '/app/uploads/$fileId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/column-mapping'
+    | '/app/exceptions'
+    | '/app/exports'
+    | '/app/health'
+    | '/app/runs'
+    | '/app/settings'
+    | '/app/uploads'
+    | '/app/workspaces'
+    | '/app'
+    | '/app/runs/$runId'
+    | '/app/uploads/$fileId'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/column-mapping'
+    | '/app/exceptions'
+    | '/app/exports'
+    | '/app/health'
+    | '/app/runs'
+    | '/app/settings'
+    | '/app/uploads'
+    | '/app/workspaces'
+    | '/app/'
+    | '/app/runs/$runId'
+    | '/app/uploads/$fileId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +202,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/workspaces': {
+      id: '/app/workspaces'
+      path: '/workspaces'
+      fullPath: '/app/workspaces'
+      preLoaderRoute: typeof AppWorkspacesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/uploads': {
+      id: '/app/uploads'
+      path: '/uploads'
+      fullPath: '/app/uploads'
+      preLoaderRoute: typeof AppUploadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/runs': {
+      id: '/app/runs'
+      path: '/runs'
+      fullPath: '/app/runs'
+      preLoaderRoute: typeof AppRunsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/health': {
+      id: '/app/health'
+      path: '/health'
+      fullPath: '/app/health'
+      preLoaderRoute: typeof AppHealthRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/exports': {
+      id: '/app/exports'
+      path: '/exports'
+      fullPath: '/app/exports'
+      preLoaderRoute: typeof AppExportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/exceptions': {
+      id: '/app/exceptions'
+      path: '/exceptions'
+      fullPath: '/app/exceptions'
+      preLoaderRoute: typeof AppExceptionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/column-mapping': {
+      id: '/app/column-mapping'
+      path: '/column-mapping'
+      fullPath: '/app/column-mapping'
+      preLoaderRoute: typeof AppColumnMappingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/uploads/$fileId': {
+      id: '/app/uploads/$fileId'
+      path: '/$fileId'
+      fullPath: '/app/uploads/$fileId'
+      preLoaderRoute: typeof AppUploadsFileIdRouteImport
+      parentRoute: typeof AppUploadsRoute
+    }
+    '/app/runs/$runId': {
+      id: '/app/runs/$runId'
+      path: '/$runId'
+      fullPath: '/app/runs/$runId'
+      preLoaderRoute: typeof AppRunsRunIdRouteImport
+      parentRoute: typeof AppRunsRoute
+    }
   }
 }
 
+interface AppRunsRouteChildren {
+  AppRunsRunIdRoute: typeof AppRunsRunIdRoute
+}
+
+const AppRunsRouteChildren: AppRunsRouteChildren = {
+  AppRunsRunIdRoute: AppRunsRunIdRoute,
+}
+
+const AppRunsRouteWithChildren =
+  AppRunsRoute._addFileChildren(AppRunsRouteChildren)
+
+interface AppUploadsRouteChildren {
+  AppUploadsFileIdRoute: typeof AppUploadsFileIdRoute
+}
+
+const AppUploadsRouteChildren: AppUploadsRouteChildren = {
+  AppUploadsFileIdRoute: AppUploadsFileIdRoute,
+}
+
+const AppUploadsRouteWithChildren = AppUploadsRoute._addFileChildren(
+  AppUploadsRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppColumnMappingRoute: typeof AppColumnMappingRoute
+  AppExceptionsRoute: typeof AppExceptionsRoute
+  AppExportsRoute: typeof AppExportsRoute
+  AppHealthRoute: typeof AppHealthRoute
+  AppRunsRoute: typeof AppRunsRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppUploadsRoute: typeof AppUploadsRouteWithChildren
+  AppWorkspacesRoute: typeof AppWorkspacesRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppColumnMappingRoute: AppColumnMappingRoute,
+  AppExceptionsRoute: AppExceptionsRoute,
+  AppExportsRoute: AppExportsRoute,
+  AppHealthRoute: AppHealthRoute,
+  AppRunsRoute: AppRunsRouteWithChildren,
+  AppSettingsRoute: AppSettingsRoute,
+  AppUploadsRoute: AppUploadsRouteWithChildren,
+  AppWorkspacesRoute: AppWorkspacesRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
