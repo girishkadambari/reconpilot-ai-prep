@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Select, EmptyState, formatDate } from "@/components/app/ui";
-import { Sparkles, Info, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Select, EmptyState, Modal, formatDate } from "@/components/app/ui";
+import { Sparkles, CheckCircle2, Loader2, AlertCircle, Info, ArrowRight, RefreshCw, AlertTriangle } from "lucide-react";
 import { columnMappingsApi, uploadsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,207 +14,77 @@ export const Route = createFileRoute("/app/column-mapping")({
   component: ColumnMappingPage,
 });
 
-const CANONICAL_FIELDS = [
-  "transaction_id", "payment_id", "order_id", "settlement_id", "payout_id", "invoice_id", "utr",
-  "gross_amount", "net_amount", "fee_amount", "tax_amount", "refund_amount",
-  "credit_amount", "debit_amount", "amount", "balance",
-  "transaction_date", "settlement_date", "invoice_date", "due_date",
-  "currency", "status", "customer_email", "description", "narration", "reference", "gateway", "ignore"
-];
+const BANK_FIELDS = ["utr", "reference", "narration", "credit_amount", "debit_amount", "balance", "currency", "transaction_date"];
+const PAYMENT_FIELDS = ["transaction_id", "payment_id", "order_id", "settlement_id", "payout_id", "invoice_id", "customer_email", "customer_id", "gross_amount", "fee_amount", "tax_amount", "refund_amount", "net_amount", "currency", "status", "gateway", "description", "transaction_date", "settlement_date"];
+const BILLING_FIELDS = ["billing_system", "billing_transaction_id", "billing_invoice_id", "billing_customer_id", "billing_subscription_id", "transaction_id", "invoice_id", "subscription_id", "customer_id", "gateway", "gateway_transaction_id", "gateway_txn_id", "gross_amount", "net_amount", "currency", "status", "transaction_date"];
+const INVOICE_FIELDS = ["invoice_id", "customer_id", "customer_email", "subscription_id", "payment_id", "gateway", "gross_amount", "net_amount", "currency", "status", "invoice_date", "due_date"];
 
-// ── AI Suggestion Banner ──────────────────────────────────────────────────────
-function AISuggestionBanner({ confidence, isNew }: { confidence: number; isNew: boolean }) {
-  return (
-    <>
-      <style>{`
-        @keyframes ai-border-pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        @keyframes ai-shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-        @keyframes ai-float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-          33% { transform: translateY(-4px) rotate(10deg); opacity: 1; }
-          66% { transform: translateY(2px) rotate(-5deg); opacity: 0.8; }
-        }
-        @keyframes ai-scan {
-          0% { top: 0%; opacity: 0; }
-          5% { opacity: 1; }
-          95% { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
-        }
-        @keyframes ai-glow-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
-          50% { box-shadow: 0 0 20px 4px rgba(124, 58, 237, 0.15); }
-        }
-        @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .ai-banner { animation: fade-in-up 0.4s ease-out, ai-glow-pulse 3s ease-in-out 0.4s infinite; }
-        .ai-shimmer-bar { animation: ai-shimmer 2.5s ease-in-out infinite; }
-        .ai-float-1 { animation: ai-float 3s ease-in-out infinite; }
-        .ai-float-2 { animation: ai-float 3s ease-in-out 1s infinite; }
-        .ai-float-3 { animation: ai-float 3s ease-in-out 2s infinite; }
-        .ai-border { animation: ai-border-pulse 2s ease-in-out infinite; }
-        .ai-scan-line { animation: ai-scan 3s ease-in-out infinite; }
-      `}</style>
-      <div
-        className="ai-banner mb-5 relative overflow-hidden rounded-[14px] border"
-        style={{
-          background: "linear-gradient(135deg, rgba(124, 58, 237, 0.04) 0%, rgba(167, 139, 250, 0.06) 50%, rgba(99, 102, 241, 0.04) 100%)",
-          borderColor: "rgba(124, 58, 237, 0.3)",
-        }}
-      >
-        {/* Shimmer sweep */}
-        <div
-          className="ai-shimmer-bar absolute inset-0 pointer-events-none"
-          style={{
-            background: "linear-gradient(105deg, transparent 40%, rgba(167, 139, 250, 0.12) 50%, transparent 60%)",
-            width: "60%",
-          }}
-        />
+const CATEGORY_FIELDS: Record<string, string[]> = {
+  BANK_STATEMENT: BANK_FIELDS,
+  STRIPE_REPORT: PAYMENT_FIELDS,
+  RAZORPAY_REPORT: PAYMENT_FIELDS,
+  CHARGEBEE_INVOICE_EXPORT: BILLING_FIELDS,
+  CHARGEBEE_TRANSACTION_EXPORT: BILLING_FIELDS,
+  INVOICE_EXPORT: INVOICE_FIELDS,
+};
 
-        {/* Scan line */}
-        <div
-          className="ai-scan-line absolute left-0 right-0 h-px pointer-events-none"
-          style={{
-            background: "linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.4), transparent)",
-          }}
-        />
+const ALL_CANONICAL_FIELDS = Array.from(new Set(Object.values(CATEGORY_FIELDS).flat()));
 
-        <div className="relative px-4 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            {/* Animated icon cluster */}
-            <div
-              className="relative w-10 h-10 rounded-[12px] grid place-items-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #7C3AED22, #6366F122)", border: "1px solid rgba(124, 58, 237, 0.25)" }}
-            >
-              <Sparkles className="size-5 text-[#7C3AED]" style={{ filter: "drop-shadow(0 0 4px rgba(124,58,237,0.5))" }} />
-              {/* Floating mini sparkles */}
-              <span className="ai-float-1 absolute -top-1 -right-1 text-[8px]">✦</span>
-              <span className="ai-float-2 absolute -bottom-1 -left-1 text-[6px] text-purple-400">✦</span>
-              <span className="ai-float-3 absolute top-0 left-0 text-[5px] text-indigo-400">✦</span>
-            </div>
+// ── Subtle AI pulse animation injected once ───────────────────────────────────
+const AI_STYLES = `
+  @keyframes rp-spin { to { transform: rotate(360deg); } }
+  @keyframes rp-pulse-ring {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+  @keyframes rp-dot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes rp-slide-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .rp-slide-in { animation: rp-slide-in 0.3s ease-out both; }
+  .rp-dot-1 { animation: rp-dot 1.2s ease-in-out infinite 0.0s; }
+  .rp-dot-2 { animation: rp-dot 1.2s ease-in-out infinite 0.15s; }
+  .rp-dot-3 { animation: rp-dot 1.2s ease-in-out infinite 0.30s; }
+  .rp-pulse { animation: rp-pulse-ring 2s ease-in-out infinite; }
+`;
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-semibold text-[#1a1a2e]">AI suggestion ready</span>
-                {isNew && (
-                  <span
-                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: "rgba(124,58,237,0.12)", color: "#7C3AED" }}
-                  >
-                    NEW
-                  </span>
-                )}
-              </div>
-              <div className="text-[12.5px] text-muted-foreground mt-0.5">
-                Confidence:{" "}
-                <span style={{ color: confidence >= 80 ? "#059669" : confidence >= 60 ? "#D97706" : "#DC2626", fontWeight: 600 }}>
-                  {confidence}%
-                </span>
-                {" "}&mdash; Review the mappings below and confirm when ready.
-              </div>
-            </div>
-          </div>
-
-          {/* Confidence ring */}
-          <div className="flex items-center gap-3">
-            <svg width="36" height="36" viewBox="0 0 36 36" className="flex-shrink-0">
-              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(124,58,237,0.1)" strokeWidth="3" />
-              <circle
-                cx="18" cy="18" r="15" fill="none"
-                stroke={confidence >= 80 ? "#059669" : confidence >= 60 ? "#D97706" : "#DC2626"}
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray={`${(confidence / 100) * 94.2} 94.2`}
-                transform="rotate(-90 18 18)"
-                style={{ transition: "stroke-dasharray 1s ease-out" }}
-              />
-              <text x="18" y="22" textAnchor="middle" fontSize="9" fontWeight="700" fill="#7C3AED">{confidence}%</text>
-            </svg>
-            <div
-              className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(124,58,237,0.1)", color: "#7C3AED", border: "1px solid rgba(124,58,237,0.2)" }}
-            >
-              ✦ AI Powered
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+// Step index: 0 = pending-suggest | 1 = suggesting | 2 = suggested | 3 = confirmed | 4 = normalizing | 5 = normalized
+function getStep(
+  isSuggesting: boolean,
+  isConfirming: boolean,
+  isNormalizing: boolean,
+  hasSuggestion: boolean,
+  isConfirmed: boolean,
+  fileStatus: string | undefined,
+): number {
+  if (fileStatus === "NORMALIZED") return 5;
+  if (fileStatus === "NORMALIZING" || isNormalizing) return 4;
+  if (isConfirmed && !isConfirming) return 3;
+  if (isConfirming) return 3; // show confirmed state while saving
+  if (isSuggesting) return 1;
+  if (hasSuggestion) return 2;
+  return 0;
 }
-
-// ── Thinking Banner (while AI is generating) ─────────────────────────────────
-function AIThinkingBanner() {
-  return (
-    <>
-      <style>{`
-        @keyframes ai-think-dot {
-          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-        .think-dot-1 { animation: ai-think-dot 1.4s ease-in-out infinite 0s; }
-        .think-dot-2 { animation: ai-think-dot 1.4s ease-in-out infinite 0.2s; }
-        .think-dot-3 { animation: ai-think-dot 1.4s ease-in-out infinite 0.4s; }
-        @keyframes ai-sweep {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        .ai-thinking-bar {
-          background: linear-gradient(90deg, #e9d5ff 0%, #c4b5fd 25%, #7C3AED 50%, #c4b5fd 75%, #e9d5ff 100%);
-          background-size: 200% 100%;
-          animation: ai-sweep 2s linear infinite;
-        }
-      `}</style>
-      <div
-        className="mb-5 rounded-[14px] border overflow-hidden"
-        style={{ borderColor: "rgba(124,58,237,0.2)", background: "rgba(124,58,237,0.03)" }}
-      >
-        <div className="h-0.5 ai-thinking-bar" />
-        <div className="px-4 py-3.5 flex items-center gap-3.5">
-          <div
-            className="w-10 h-10 rounded-[12px] grid place-items-center flex-shrink-0"
-            style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)" }}
-          >
-            <Sparkles className="size-5 text-[#7C3AED]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] font-semibold text-[#1a1a2e]">AI is analysing your columns</span>
-              <span className="flex items-center gap-1 ml-1">
-                <span className="think-dot-1 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
-                <span className="think-dot-2 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
-                <span className="think-dot-3 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
-              </span>
-            </div>
-            <div className="text-[12.5px] text-muted-foreground mt-0.5">
-              Matching your source columns to our canonical financial schema…
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
 
 function ColumnMappingPage() {
   const { fileId } = Route.useSearch();
   const queryClient = useQueryClient();
   const [localMapping, setLocalMapping] = useState<Record<string, string>>({});
-  // Track if the mapping was freshly suggested (so we always show ai_suggested_mapping_json)
   const freshSuggestRef = useRef(false);
+  // Re-normalize confirmation modal state
+  const [showReNormalizeModal, setShowReNormalizeModal] = useState(false);
 
   const { data: file } = useQuery({
     queryKey: ["upload", fileId],
     queryFn: () => uploadsApi.get(fileId),
     enabled: !!fileId,
+    refetchInterval: (q) =>
+      q.state.data?.status === "NORMALIZING" ? 1500 : false,
   });
 
   const { data: mapping, isLoading: mappingLoading, error: mappingError } = useQuery({
@@ -224,67 +94,59 @@ function ColumnMappingPage() {
     retry: false,
   });
 
+  // ── Mutations ───────────────────────────────────────────────────────────────
   const suggestMutation = useMutation({
     mutationFn: () => columnMappingsApi.suggest(fileId),
     onSuccess: (data) => {
       freshSuggestRef.current = true;
-      // Use the fresh AI suggestion as the working mapping
-      const freshMapping = data.ai_suggested_mapping_json || data.mapping_json || {};
       queryClient.setQueryData(["mapping", fileId], data);
-      setLocalMapping(freshMapping);
-      toast.success("AI suggestion ready. Review and confirm below.");
+      queryClient.invalidateQueries({ queryKey: ["upload", fileId] });
+      setLocalMapping(data.ai_suggested_mapping_json || data.mapping_json || {});
+      toast.success("AI suggestion ready — review and confirm below.");
     },
     onError: (err: any) => {
-      if (err?.status === 404) {
-        toast.error("File has no parsed rows yet. Try re-uploading the file.");
-      } else {
-        toast.error(err?.error?.message || "AI suggestion failed. Please try again.");
-      }
+      toast.error(err?.error?.message || "AI suggestion failed. Please try again.");
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: (m: Record<string, string>) => columnMappingsApi.confirm(fileId, m),
+    mutationFn: (m: Record<string, string>) =>
+      columnMappingsApi.confirm(fileId, m),
     onSuccess: (data) => {
       freshSuggestRef.current = false;
       queryClient.setQueryData(["mapping", fileId], data);
       queryClient.invalidateQueries({ queryKey: ["upload", fileId] });
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
       setLocalMapping(data.mapping_json || {});
-      toast.success("Mapping confirmed — ready to normalize!");
+      toast.success("Mapping confirmed!");
     },
     onError: (err: any) => {
-      if (err?.status === 409) {
-        // Already confirmed — let them re-suggest to reset
-        toast.info("Already confirmed. Click 'Suggest with AI' to re-map, or click 'Normalize file'.");
-        queryClient.invalidateQueries({ queryKey: ["mapping", fileId] });
-      } else {
-        toast.error(err?.error?.message || "Failed to confirm mapping. Please try again.");
-      }
+      toast.error(err?.error?.message || "Failed to confirm mapping. Please try again.");
     },
   });
 
   const normalizeMutation = useMutation({
     mutationFn: () => columnMappingsApi.normalize(fileId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["upload", fileId] });
+    onSuccess: async () => {
+      // Immediately refetch so the UI switches to NORMALIZING then NORMALIZED state
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["upload", fileId] }),
+        queryClient.refetchQueries({ queryKey: ["mapping", fileId] }),
+      ]);
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
       toast.success("Normalization complete! File is ready for reconciliation.");
     },
     onError: (err: any) => {
-      if (err?.status === 409) {
-        toast.info("Already normalized. Re-suggest the mapping to re-run normalization.");
-      } else {
-        toast.error(err?.error?.message || "Normalization failed. Please try again.");
-      }
+      queryClient.invalidateQueries({ queryKey: ["upload", fileId] });
+      queryClient.invalidateQueries({ queryKey: ["mapping", fileId] });
+      toast.error(err?.error?.message || "Normalization failed. Please try again.");
     },
   });
 
-  // Sync localMapping from server data
-  // Prefer ai_suggested_mapping_json when freshly suggested, else use confirmed mapping_json
+  // ── Sync localMapping from server ───────────────────────────────────────────
   useEffect(() => {
     if (!mapping) return;
-    if (freshSuggestRef.current) return; // onSuccess already set it, don't overwrite
+    if (freshSuggestRef.current) return; // already set by onSuccess
     const working =
       mapping.mapping_json && Object.keys(mapping.mapping_json).length > 0
         ? mapping.mapping_json
@@ -292,9 +154,14 @@ function ColumnMappingPage() {
     setLocalMapping(working);
   }, [mapping]);
 
-  // Auto-trigger suggest on 404 (new file, never suggested before)
+  // Auto-suggest on 404 (file never mapped before)
   useEffect(() => {
-    if (mappingError && (mappingError as any)?.status === 404 && !suggestMutation.isPending) {
+    if (
+      mappingError &&
+      (mappingError as any)?.status === 404 &&
+      !suggestMutation.isPending &&
+      !suggestMutation.isSuccess
+    ) {
       suggestMutation.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -309,7 +176,7 @@ function ColumnMappingPage() {
 
   if (!fileId) {
     const pending = (allUploads || []).filter(
-      u => u.status === "PARSED" || u.status === "PENDING_MAPPING"
+      (u) => u.status === "PARSED" || u.status === "PENDING_MAPPING",
     );
     return (
       <PageContainer>
@@ -319,13 +186,20 @@ function ColumnMappingPage() {
         />
         {pending.length > 0 ? (
           <div className="space-y-4">
-            <div className="text-[13px] font-medium text-muted-foreground px-1">
+            <p className="text-[13px] font-medium text-muted-foreground">
               Files needing mapping ({pending.length})
-            </div>
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pending.map(u => (
-                <Card key={u.id} className="hover:border-[#7C3AED]/40 transition-colors cursor-pointer group">
-                  <Link to="/app/column-mapping" search={{ fileId: u.id }} className="block">
+              {pending.map((u) => (
+                <Card
+                  key={u.id}
+                  className="hover:border-[#7C3AED]/40 transition-colors cursor-pointer group"
+                >
+                  <Link
+                    to="/app/column-mapping"
+                    search={{ fileId: u.id }}
+                    className="block"
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div className="font-semibold text-[14.5px] group-hover:text-[#7C3AED] transition-colors truncate pr-2">
                         {u.file_name}
@@ -333,8 +207,8 @@ function ColumnMappingPage() {
                       <Badge tone="neutral">{u.file_category}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-[12px] text-muted-foreground">
-                      <div>{(u.row_count ?? 0).toLocaleString()} rows</div>
-                      <div>{formatDate(u.created_at)}</div>
+                      <span>{(u.row_count ?? 0).toLocaleString()} rows</span>
+                      <span>{formatDate(u.created_at)}</span>
                     </div>
                   </Link>
                 </Card>
@@ -347,8 +221,12 @@ function ColumnMappingPage() {
             description="Upload more files or proceed to create reconciliation runs."
             action={
               <div className="flex gap-3">
-                <Link to="/app/uploads"><Btn variant="secondary">Go to Uploads</Btn></Link>
-                <Link to="/app/runs"><Btn>Create a run</Btn></Link>
+                <Link to="/app/uploads">
+                  <Btn variant="secondary">Go to Uploads</Btn>
+                </Link>
+                <Link to="/app/runs">
+                  <Btn>Create a run</Btn>
+                </Link>
               </div>
             }
           />
@@ -357,174 +235,328 @@ function ColumnMappingPage() {
     );
   }
 
-  // ── Status helpers ──────────────────────────────────────────────────────────
+  // ── Derived state ───────────────────────────────────────────────────────────
   const isConfirmed = mapping?.status === "CONFIRMED";
   const isNormalized = file?.status === "NORMALIZED";
-  const isNormalizing = file?.status === "NORMALIZING";
+  const isNormalizing = file?.status === "NORMALIZING" || normalizeMutation.isPending;
   const hasSuggestion = !!(mapping?.ai_suggested_mapping_json);
   const hasColumns = Object.keys(localMapping).length > 0;
-  const isLoading = mappingLoading || suggestMutation.isPending;
+  const isLoadingTable = mappingLoading || suggestMutation.isPending;
 
-  const bottomLabel = isConfirmed
-    ? isNormalized
-      ? "✓ File is normalized and ready for reconciliation."
-      : "✓ Mapping confirmed. Click 'Normalize file' to proceed."
-    : "Review column mappings and confirm to unlock normalization.";
+  // Check if user has made manual edits since last save/suggestion
+  const serverMapping = mapping?.mapping_json || mapping?.ai_suggested_mapping_json || {};
+  const hasUnsavedChanges = JSON.stringify(localMapping) !== JSON.stringify(serverMapping);
+
+  const step = getStep(
+    suggestMutation.isPending,
+    confirmMutation.isPending,
+    isNormalizing,
+    hasSuggestion,
+    isConfirmed,
+    file?.status,
+  );
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Column Mapping"
-        description={`Configure how columns in ${file?.file_name ?? "your file"} map to our standard fields.`}
-        actions={
-          <>
-            <Btn
-              variant="secondary"
-              onClick={() => suggestMutation.mutate()}
-              loading={suggestMutation.isPending}
-              disabled={suggestMutation.isPending}
-            >
-              <Sparkles className="size-4" />
-              {isConfirmed ? "Re-suggest" : "Suggest with AI"}
-            </Btn>
-            {isConfirmed || isNormalized || isNormalizing ? (
-              <Btn
-                onClick={() => normalizeMutation.mutate()}
-                loading={normalizeMutation.isPending}
-                disabled={isNormalizing}
-              >
-                {isNormalizing ? "Normalizing…" : isNormalized ? "Re-normalize" : "Normalize file"}
-              </Btn>
-            ) : (
-              <Btn
-                onClick={() => confirmMutation.mutate(localMapping)}
-                loading={confirmMutation.isPending}
-                disabled={!hasColumns || confirmMutation.isPending}
-              >
-                Confirm mapping
-              </Btn>
-            )}
-          </>
-        }
-      />
+    <>
+      <style>{AI_STYLES}</style>
+      <PageContainer>
+        {/* ── Header ── */}
+        <PageHeader
+          title="Column Mapping"
+          description={`Configure how columns in ${file?.file_name ?? "your file"} map to our standard fields.`}
+          actions={
+            <div className="flex items-center gap-2">
+              {/* Re-suggest available when not actively normalizing */}
+              {!isNormalizing && (
+                <Btn
+                  variant="secondary"
+                  onClick={() => suggestMutation.mutate()}
+                  loading={suggestMutation.isPending}
+                  disabled={suggestMutation.isPending}
+                >
+                  <Sparkles className="size-4" />
+                  {isConfirmed || isNormalized ? "Re-suggest" : "Suggest with AI"}
+                </Btn>
+              )}
 
-      {/* AI Banner */}
-      {suggestMutation.isPending && <AIThinkingBanner />}
-      {!suggestMutation.isPending && hasSuggestion && (
-        <AISuggestionBanner
-          confidence={mapping!.ai_confidence_score ?? 0}
-          isNew={freshSuggestRef.current || !isConfirmed}
+              {/* Primary action changes by step */}
+              {(step <= 2 || hasUnsavedChanges) && !suggestMutation.isPending && hasColumns && !isNormalizing && (
+                <Btn
+                  onClick={() => confirmMutation.mutate(localMapping)}
+                  loading={confirmMutation.isPending}
+                  disabled={!hasColumns || confirmMutation.isPending}
+                >
+                  {isConfirmed || isNormalized ? "Save changes" : "Confirm mapping"}
+                </Btn>
+              )}
+              {step === 3 && !hasUnsavedChanges && (
+                <Btn
+                  onClick={() => normalizeMutation.mutate()}
+                  loading={isNormalizing}
+                  disabled={isNormalizing}
+                >
+                  Normalize file
+                </Btn>
+              )}
+              {step === 4 && (
+                <Btn disabled loading>
+                  Normalizing…
+                </Btn>
+              )}
+              {step === 5 && !hasUnsavedChanges && (
+                <Btn
+                  variant="secondary"
+                  onClick={() => setShowReNormalizeModal(true)}
+                  disabled={isNormalizing}
+                >
+                  <RefreshCw className="size-4" />
+                  Re-normalize
+                </Btn>
+              )}
+            </div>
+          }
         />
-      )}
 
-      {/* Confirmed state banner */}
-      {isConfirmed && !suggestMutation.isPending && (
-        <div
-          className="mb-5 flex items-center gap-3 px-4 py-3 rounded-[12px] border"
-          style={{ background: "rgba(5,150,105,0.04)", borderColor: "rgba(5,150,105,0.25)" }}
-        >
-          <CheckCircle2 className="size-5 text-emerald-600 flex-shrink-0" />
-          <div>
-            <div className="text-[13.5px] font-semibold text-emerald-800">Mapping confirmed</div>
-            <div className="text-[12px] text-emerald-700">
-              {isNormalized ? "File normalized and ready for reconciliation." :
-                isNormalizing ? "Normalization in progress…" :
-                  "Click 'Normalize file' to transform records into canonical format."}
+        {/* ── Progress steps ───────────────────────────────────────────────── */}
+        <div className="flex items-center gap-0 mb-6">
+          {[
+            { label: "AI Suggest", idx: 2 },
+            { label: "Confirm", idx: 3 },
+            { label: "Normalize", idx: 5 },
+          ].map((s, i, arr) => {
+            const done = step >= s.idx;
+            const active = step === s.idx - 1 || (s.idx === 2 && step === 1);
+            return (
+              <div key={s.label} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-6 h-6 rounded-full grid place-items-center text-[11px] font-bold transition-all ${done
+                      ? "bg-[#7C3AED] text-white"
+                      : active
+                        ? "border-2 border-[#7C3AED] text-[#7C3AED]"
+                        : "border-2 border-[#E5E5E5] text-[#B0B0B0]"
+                      }`}
+                  >
+                    {done ? <CheckCircle2 className="size-3.5" /> : i + 1}
+                  </div>
+                  <span
+                    className={`text-[12.5px] font-medium ${done ? "text-[#7C3AED]" : active ? "text-[#1a1a2e]" : "text-[#B0B0B0]"
+                      }`}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <ArrowRight className="size-3.5 text-[#D1D5DB] mx-3" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Status banner ───────────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="rp-slide-in mb-5 flex items-center gap-3 px-4 py-3.5 rounded-[12px] border border-[#7C3AED]/20 bg-purple-50/40">
+            <div className="rp-pulse w-8 h-8 rounded-full bg-[#7C3AED]/10 grid place-items-center flex-shrink-0">
+              <Sparkles className="size-4 text-[#7C3AED]" />
+            </div>
+            <div>
+              <div className="text-[13.5px] font-semibold">AI is analysing your columns</div>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="rp-dot-1 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
+                <span className="rp-dot-2 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
+                <span className="rp-dot-3 w-1.5 h-1.5 rounded-full bg-[#7C3AED] inline-block" />
+                <span className="text-[12px] text-muted-foreground ml-1">
+                  Matching your columns to canonical fields…
+                </span>
+              </div>
             </div>
           </div>
-          {isNormalized && <Badge tone="success" className="ml-auto">NORMALIZED</Badge>}
-          {isNormalizing && <Loader2 className="size-4 animate-spin text-emerald-600 ml-auto" />}
-        </div>
-      )}
+        )}
 
-      {/* Mapping table */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-24 border border-border rounded-[12px] bg-white">
-          <div className="relative">
-            <Loader2 className="size-8 animate-spin text-[#7C3AED]" />
-            <Sparkles className="size-4 text-indigo-400 absolute -top-2 -right-2 animate-pulse" />
+        {step === 2 && (
+          <div className="rp-slide-in mb-5 flex items-center justify-between px-4 py-3.5 rounded-[12px] border border-[#7C3AED]/25 bg-purple-50/30">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#7C3AED]/10 grid place-items-center flex-shrink-0">
+                <Sparkles className="size-4 text-[#7C3AED]" />
+              </div>
+              <div>
+                <div className="text-[13.5px] font-semibold">Suggestion ready</div>
+                <div className="text-[12px] text-muted-foreground">
+                  Confidence:{" "}
+                  <span className="font-semibold text-[#7C3AED]">
+                    {mapping?.ai_confidence_score ?? "—"}%
+                  </span>
+                  {" · "}Review the mappings below, adjust if needed, then confirm.
+                </div>
+              </div>
+            </div>
+            <Badge tone="purple">AI Suggestion</Badge>
           </div>
-          <div className="mt-3 text-[13px] text-muted-foreground">
-            {suggestMutation.isPending ? "AI is mapping your columns…" : "Loading mapping…"}
+        )}
+
+        {step === 3 && (
+          <div className="rp-slide-in mb-5 flex items-center justify-between px-4 py-3.5 rounded-[12px] border border-emerald-200 bg-emerald-50/40">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="size-5 text-emerald-600 flex-shrink-0" />
+              <div>
+                <div className="text-[13.5px] font-semibold text-emerald-800">Mapping confirmed</div>
+                <div className="text-[12px] text-emerald-700">
+                  Click <strong>Normalize file</strong> to transform records into canonical format.
+                </div>
+              </div>
+            </div>
+            <Badge tone="success">CONFIRMED</Badge>
           </div>
-        </div>
-      ) : hasColumns ? (
-        <Table>
-          <thead>
-            <tr>
-              <Th>Source column</Th>
-              <Th>Canonical field</Th>
-              <Th className="text-right">Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(localMapping).map(([col, mapped]) => (
-              <tr key={col} className="hover:bg-[#FAFAFA] transition-colors">
-                <Td className="font-medium font-mono text-[13px]">{col}</Td>
-                <Td>
-                  <Select
-                    value={mapped}
-                    onChange={(e) => {
-                      freshSuggestRef.current = false; // user is editing manually
-                      setLocalMapping({ ...localMapping, [col]: e.target.value });
-                    }}
-                    className="max-w-[240px]"
-                    disabled={isNormalized || isNormalizing}
+        )}
+
+        {step === 4 && (
+          <div className="rp-slide-in mb-5 flex items-center gap-3 px-4 py-3.5 rounded-[12px] border border-blue-200 bg-blue-50/40">
+            <Loader2 className="size-5 text-blue-600 animate-spin flex-shrink-0" />
+            <div>
+              <div className="text-[13.5px] font-semibold text-blue-800">Normalization in progress</div>
+              <div className="text-[12px] text-blue-700">
+                Transforming source rows into the canonical financial schema…
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="rp-slide-in mb-5 flex items-center justify-between px-4 py-3.5 rounded-[12px] border border-emerald-200 bg-emerald-50/40">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="size-5 text-emerald-600 flex-shrink-0" />
+              <div>
+                <div className="text-[13.5px] font-semibold text-emerald-800">Normalized</div>
+                <div className="text-[12px] text-emerald-700">
+                  File is ready for reconciliation.{" "}
+                  <Link to="/app/runs" className="underline font-medium">Create a run →</Link>
+                  {" · "}
+                  <button
+                    className="underline font-medium text-emerald-700 hover:text-emerald-900"
+                    onClick={() => setShowReNormalizeModal(true)}
                   >
-                    {CANONICAL_FIELDS.map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </Select>
-                </Td>
-                <Td className="text-right">
-                  <Badge tone={mapped === "ignore" ? "neutral" : "success"}>
-                    {mapped === "ignore" ? "Ignored" : "Mapped"}
-                  </Badge>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border rounded-[12px]">
-          <AlertCircle className="size-8 text-muted-foreground mb-3" />
-          <div className="text-[14px] font-medium text-muted-foreground">No mapping available</div>
-          <div className="text-[12.5px] text-muted-foreground mt-1">
-            Click "Suggest with AI" to generate a mapping for this file.
+                    Re-normalize
+                  </button>
+                </div>
+              </div>
+            </div>
+            <Badge tone="success">NORMALIZED</Badge>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Footer */}
-      {hasColumns && !isLoading && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+        {/* ── Table (loading / empty / populated) ───────────────────────── */}
+        {isLoadingTable ? (
+          <div className="flex flex-col items-center justify-center py-24 rounded-[12px] border border-border bg-white">
+            <div className="rp-pulse w-12 h-12 rounded-full bg-[#7C3AED]/8 grid place-items-center mb-4">
+              <Sparkles className="size-5 text-[#7C3AED]" />
+            </div>
+            <p className="text-[13px] text-muted-foreground">
+              {suggestMutation.isPending
+                ? "AI is mapping your columns…"
+                : "Loading column mapping…"}
+            </p>
+          </div>
+        ) : !hasColumns ? (
+          <div className="flex flex-col items-center justify-center py-16 rounded-[12px] border border-dashed border-border">
+            <AlertCircle className="size-7 text-muted-foreground mb-3" />
+            <p className="text-[13.5px] font-medium text-muted-foreground">No mapping available</p>
+            <p className="text-[12.5px] text-muted-foreground mt-1">
+              Click "Suggest with AI" to generate mappings for this file.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <Th>Source column</Th>
+                <Th>Canonical field</Th>
+                <Th className="text-right">Status</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(localMapping).map(([col, mapped]) => (
+                <tr key={col} className="hover:bg-[#FAFAFA] transition-colors">
+                  <Td className="font-mono text-[13px] font-medium">{col}</Td>
+                  <Td>
+                    <Select
+                      value={mapped}
+                      onChange={(e) => {
+                        freshSuggestRef.current = false;
+                        setLocalMapping({ ...localMapping, [col]: e.target.value });
+                      }}
+                      className="max-w-[240px]"
+                      disabled={isNormalizing}
+                    >
+                      {(file?.file_category ? CATEGORY_FIELDS[file.file_category] || [] : ALL_CANONICAL_FIELDS).concat("ignore").map((f) => (
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
+                      ))}
+                    </Select>
+                  </Td>
+                  <Td className="text-right">
+                    <Badge tone={mapped === "ignore" ? "neutral" : "success"}>
+                      {mapped === "ignore" ? "Ignored" : "Mapped"}
+                    </Badge>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+
+        {/* ── Footer hint ─────────────────────────────────────────────────── */}
+        {hasColumns && !isLoadingTable && (
+          <div className="mt-3 flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <Info className="size-3.5 flex-shrink-0" />
-            {bottomLabel}
+            {step <= 2
+              ? "Adjust any incorrect mappings above, then click Confirm mapping."
+              : step === 3
+                ? "Mapping confirmed. Click Normalize file to process the records."
+                : step === 4
+                  ? "Normalization running — this may take a moment."
+                  : "File is normalized. You can re-suggest and re-normalize if you need to fix mappings."}
           </div>
-          <div className="flex items-center gap-2">
-            {isConfirmed || isNormalized || isNormalizing ? (
+        )}
+
+        {/* ── Re-normalize confirmation modal ──────────────────────────────── */}
+        <Modal
+          open={showReNormalizeModal}
+          onClose={() => setShowReNormalizeModal(false)}
+          title="Re-normalize file?"
+          footer={
+            <div className="flex justify-end gap-2">
+              <Btn variant="secondary" onClick={() => setShowReNormalizeModal(false)}>
+                Cancel
+              </Btn>
               <Btn
-                onClick={() => normalizeMutation.mutate()}
+                onClick={() => {
+                  setShowReNormalizeModal(false);
+                  normalizeMutation.mutate();
+                }}
                 loading={normalizeMutation.isPending}
-                disabled={isNormalizing}
-                size="sm"
               >
-                {isNormalizing ? "Normalizing…" : isNormalized ? "Re-normalize" : "Normalize file"}
+                <RefreshCw className="size-4" />
+                Yes, re-normalize
               </Btn>
-            ) : (
-              <Btn
-                onClick={() => confirmMutation.mutate(localMapping)}
-                loading={confirmMutation.isPending}
-                disabled={!hasColumns}
-                size="sm"
-              >
-                Confirm mapping
-              </Btn>
-            )}
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 rounded-[10px] bg-amber-50 border border-amber-200">
+              <AlertTriangle className="size-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-[13px] text-amber-800">
+                <strong>This will delete all existing canonical rows</strong> for this file and re-process them from scratch.
+              </div>
+            </div>
+            <p className="text-[13px] text-muted-foreground">
+              Use this if you've changed the column mappings above and need to re-apply them.
+              Any reconciliation runs that used this file's canonical data may need to be re-run.
+            </p>
           </div>
-        </div>
-      )}
-    </PageContainer>
+        </Modal>
+      </PageContainer>
+    </>
   );
 }
