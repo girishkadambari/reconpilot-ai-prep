@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { authApi } from "@/lib/api";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
@@ -39,22 +40,6 @@ function LoginPage() {
       }
     }
   }, [login]);
-
-  const handleDevLogin = async () => {
-    setLoading(true);
-    try {
-      const res = await authApi.devLogin({
-        email: "alice@acme.com",
-        full_name: "Alice Smith"
-      });
-      login(res.access_token);
-      toast.success("Welcome back, Alice!");
-    } catch (e: any) {
-      toast.error(e.error?.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/api/auth/google/login`;
@@ -80,19 +65,11 @@ function LoginPage() {
           </div>
 
           <div className="bg-white border border-border rounded-[14px] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-            <Btn className="w-full justify-center" size="md" onClick={handleGoogleLogin} disabled={loading}>
-              <GoogleIcon /> Continue with Google
-            </Btn>
-
-            <div className="my-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">or</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <Btn variant="secondary" className="w-full justify-center" onClick={handleDevLogin} loading={loading}>
-              Use dev login (local only)
-            </Btn>
+            <a href={`${import.meta.env.VITE_API_BASE_URL}/api/auth/google/login`} className="block w-full">
+              <Btn className="w-full justify-center pointer-events-none" size="md">
+                <GoogleIcon /> Continue with Google
+              </Btn>
+            </a>
 
             <p className="text-[11.5px] text-muted-foreground text-center mt-5">
               By continuing you agree to our Terms and acknowledge the Privacy Notice.
@@ -110,6 +87,32 @@ function LoginPage() {
       <footer className="py-5 text-center text-[11.5px] text-muted-foreground">
         © 2025 ReconPilot · request_id surfaced on all errors for support
       </footer>
+
+      {authLoading && (
+        <div className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-sm grid place-items-center animate-in fade-in duration-300">
+          <div className="text-center">
+            {authError ? (
+              <div className="p-6 bg-white border border-destructive/20 rounded-xl shadow-lg max-w-[320px]">
+                <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive grid place-items-center mx-auto mb-3">
+                  <span className="font-bold">!</span>
+                </div>
+                <div className="text-[14px] font-semibold text-foreground mb-1">Session failed</div>
+                <div className="text-[12px] text-muted-foreground mb-4">
+                  {(authError as any)?.error?.message || "Verify your connection and try again."}
+                </div>
+                <Btn variant="secondary" size="sm" onClick={() => window.location.href = '/'}>
+                  Try again
+                </Btn>
+              </div>
+            ) : (
+              <>
+                <Loader2 className="size-8 animate-spin mx-auto text-[#7C3AED] mb-4" />
+                <div className="text-[14px] font-medium animate-pulse">Establishing secure session...</div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ interface AuthContextType {
   workspace: Workspace | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: any;
   login: (token: string) => void;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     workspace: authData?.active_workspace ?? null,
     isAuthenticated: !!authData?.user,
     isLoading: !isInitialized || (!!token && isLoading),
+    error,
     login,
     logout,
     refresh: async () => { await refetch(); },

@@ -71,7 +71,7 @@ export function Btn({
   }[variant];
   return (
     <button
-      className={["inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:opacity-50", sizes, variants, className].join(" ")}
+      className={["inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed", sizes, variants, className].join(" ")}
       disabled={loading || rest.disabled}
       {...rest}
     >
