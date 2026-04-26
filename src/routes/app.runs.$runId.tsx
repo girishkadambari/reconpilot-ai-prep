@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Card, PageContainer, PageHeader, Btn, Badge, Stat, Tabs, Table, Th, Td, Drawer, severityTone, statusTone, EmptyState, formatDate } from "@/components/app/ui";
+import { Card, PageContainer, PageHeader, Btn, Badge, Stat, Tabs, Table, Th, Td, severityTone, statusTone, EmptyState, formatDate } from "@/components/app/ui";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Sparkles, Play, Download, ArrowLeft, AlertTriangle, Loader2 } from "lucide-react";
 import { reconciliationRunsApi, exportsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -237,77 +238,74 @@ function RunDetail() {
           </Table>
         )}
       </div>
-      <Drawer
-        padding={false}
-        open={!!drawer}
-        onClose={() => setDrawer(null)}
-        width="600px"
-      >
-        <div className="h-full overflow-hidden">
-          {evidenceLoading ? (
-            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>
-          ) : evidence ? (
-            drawer?.kind === "match" ? (
-              <div className="p-6 space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b">
-                  <h2 className="text-[16px] font-semibold">Match evidence</h2>
-                  <button onClick={() => setDrawer(null)} className="text-[13px] font-medium text-muted-foreground hover:text-foreground">Close</button>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Source record</div>
-                    <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
-                      <table className="w-full text-[12px] font-mono">
-                        <tbody>
-                          {Object.entries((evidence as any).source || {}).map(([k, v], i) => (
-                            <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
-                              <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
-                              <td className="px-3 py-2 break-all">{String(v)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+      <Dialog open={!!drawer} onOpenChange={(open) => !open && setDrawer(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="h-full overflow-y-auto">
+            {evidenceLoading ? (
+              <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>
+            ) : evidence ? (
+              drawer?.kind === "match" ? (
+                <div className="p-6 space-y-6">
+                  <div className="flex items-center justify-between pb-4 border-b">
+                    <h2 className="text-[16px] font-semibold">Match evidence</h2>
+                    <button onClick={() => setDrawer(null)} className="text-[13px] font-medium text-muted-foreground hover:text-foreground">Close</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Source record</div>
+                      <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
+                        <table className="w-full text-[12px] font-mono">
+                          <tbody>
+                            {Object.entries((evidence as any).source || {}).map(([k, v], i) => (
+                              <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
+                                <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
+                                <td className="px-3 py-2 break-all">{String(v)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Target record</div>
+                      <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
+                        <table className="w-full text-[12px] font-mono">
+                          <tbody>
+                            {Object.entries((evidence as any).target || {}).map(([k, v], i) => (
+                              <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
+                                <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
+                                <td className="px-3 py-2 break-all">{String(v)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Target record</div>
-                    <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
-                      <table className="w-full text-[12px] font-mono">
-                        <tbody>
-                          {Object.entries((evidence as any).target || {}).map(([k, v], i) => (
-                            <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
-                              <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
-                              <td className="px-3 py-2 break-all">{String(v)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                  <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-bold text-blue-600 uppercase">Match Strategy</div>
+                      <div className="text-[14px] font-medium">{evidence.match_strategy}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[11px] font-bold text-blue-600 uppercase">Confidence</div>
+                      <div className="text-[18px] font-bold">{evidence.confidence_score}%</div>
                     </div>
                   </div>
                 </div>
-                <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-bold text-blue-600 uppercase">Match Strategy</div>
-                    <div className="text-[14px] font-medium">{evidence.match_strategy}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[11px] font-bold text-blue-600 uppercase">Confidence</div>
-                    <div className="text-[18px] font-bold">{evidence.confidence_score}%</div>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <ExceptionDetails
+                  exception={evidence as any}
+                  onClose={() => setDrawer(null)}
+                  onUpdate={() => queryClient.invalidateQueries({ queryKey: ["run-exceptions", runId] })}
+                />
+              )
             ) : (
-              <ExceptionDetails
-                exception={evidence as any}
-                onClose={() => setDrawer(null)}
-                onUpdate={() => queryClient.invalidateQueries({ queryKey: ["run-exceptions", runId] })}
-              />
-            )
-          ) : (
-            <div className="py-20 text-center text-muted-foreground italic">Evidence not found.</div>
-          )}
-        </div>
-      </Drawer>
+              <div className="py-20 text-center text-muted-foreground italic">Evidence not found.</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

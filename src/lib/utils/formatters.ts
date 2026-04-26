@@ -79,3 +79,11 @@ export function formatLabel(key: string, mapper: Record<string, string>): string
   if (!key) return "";
   return mapper[key] || key.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 }
+
+export function formatCurrency(amount: number, currency: string = "USD"): string {
+  if (amount === null || amount === undefined || isNaN(Number(amount))) return "N/A";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+  }).format(Number(amount));
+}

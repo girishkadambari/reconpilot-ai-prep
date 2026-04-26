@@ -1,16 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Drawer, Select, severityTone, statusTone, CopyButton } from "@/components/app/ui";
+import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Select, severityTone, statusTone, CopyButton } from "@/components/app/ui";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { reconciliationRunsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Search, AlertTriangle, Filter, Loader2, Info } from "lucide-react";
+import { Sparkles, Search, Filter, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ExceptionDetails } from "@/components/app/ExceptionDetails";
-import { 
-  EXCEPTION_TYPE_LABELS, 
-  SEVERITY_LABELS, 
-  EXCEPTION_STATUS_LABELS, 
-  formatLabel 
+import {
+  EXCEPTION_TYPE_LABELS,
+  SEVERITY_LABELS,
+  EXCEPTION_STATUS_LABELS,
+  formatLabel
 } from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/exceptions")({
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/app/exceptions")({
   component: ExceptionsPage,
 });
 
-const TYPES = ["MISSING_INVOICE","MISSING_PAYMENT","MISSING_SETTLEMENT","MISSING_BANK_CREDIT","AMOUNT_MISMATCH","FEE_MISMATCH","TAX_MISMATCH","REFUND_MISMATCH","DUPLICATE_PAYMENT","DELAYED_SETTLEMENT","UNKNOWN_BANK_CREDIT","OFFLINE_PAYMENT_CANDIDATE","CHARGEBACK_OR_DISPUTE","CURRENCY_MISMATCH","NEEDS_MANUAL_REVIEW","NET_SETTLEMENT_DIFF"];
+const TYPES = ["MISSING_INVOICE", "MISSING_PAYMENT", "MISSING_SETTLEMENT", "MISSING_BANK_CREDIT", "AMOUNT_MISMATCH", "FEE_MISMATCH", "TAX_MISMATCH", "REFUND_MISMATCH", "DUPLICATE_PAYMENT", "DELAYED_SETTLEMENT", "UNKNOWN_BANK_CREDIT", "OFFLINE_PAYMENT_CANDIDATE", "CHARGEBACK_OR_DISPUTE", "CURRENCY_MISMATCH", "NEEDS_MANUAL_REVIEW", "NET_SETTLEMENT_DIFF"];
 
 function ExceptionsPage() {
   const [status, setStatus] = useState("");
@@ -82,26 +83,26 @@ function ExceptionsPage() {
         <div className="flex items-center gap-2 p-3 flex-wrap">
           <div className="relative flex-1 min-w-[220px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <input 
-              value={q} 
-              onChange={(e)=>setQ(e.target.value)} 
-              placeholder="Search reference / UTR" 
-              className="w-full h-9 pl-9 pr-3 rounded-[10px] border border-border text-[13px] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30" 
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search reference / UTR"
+              className="w-full h-9 pl-9 pr-3 rounded-[10px] border border-border text-[13px] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30"
             />
           </div>
-          <Select value={status} onChange={(e)=>setStatus(e.target.value)} className="max-w-[160px]">
+          <Select value={status} onChange={(e) => setStatus(e.target.value)} className="max-w-[160px]">
             <option value="">All status</option>
             {Object.entries(EXCEPTION_STATUS_LABELS).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </Select>
-          <Select value={severity} onChange={(e)=>setSeverity(e.target.value)} className="max-w-[160px]">
+          <Select value={severity} onChange={(e) => setSeverity(e.target.value)} className="max-w-[160px]">
             <option value="">All severities</option>
             {Object.entries(SEVERITY_LABELS).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
             ))}
           </Select>
-          <Select value={type} onChange={(e)=>setType(e.target.value)} className="max-w-[260px]">
+          <Select value={type} onChange={(e) => setType(e.target.value)} className="max-w-[260px]">
             <option value="">All types</option>
             {TYPES.map(t => <option key={t} value={t}>{formatLabel(t, EXCEPTION_TYPE_LABELS)}</option>)}
           </Select>
@@ -156,10 +157,10 @@ function ExceptionsPage() {
                 <Td><Badge tone={statusTone(e.status)}>{formatLabel(e.status, EXCEPTION_STATUS_LABELS)}</Badge></Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <Btn size="sm" variant="ghost" onClick={()=>setDrawer(e.id)}>View</Btn>
-                    <Btn 
-                      size="sm" 
-                      variant="secondary" 
+                    <Btn size="sm" variant="ghost" onClick={() => setDrawer(e.id)}>View</Btn>
+                    <Btn
+                      size="sm"
+                      variant="secondary"
                       title="Explain with AI"
                       onClick={() => reconciliationRunsApi.explainException(e.run_id, e.id, true).then(() => {
                         toast.success("AI explanation refreshed");
@@ -176,20 +177,17 @@ function ExceptionsPage() {
           </tbody>
         </Table>
       )}
-      <Drawer 
-        padding={false}
-        open={!!drawer} 
-        onClose={()=>setDrawer(null)} 
-        width="600px"
-      >
-        {drawer && (
-          <ExceptionDetails 
-            exception={exceptions.find(x => x.id === drawer)!} 
-            onClose={()=>setDrawer(null)}
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["global-exceptions"] })}
-          />
-        )}
-      </Drawer>
+      <Dialog open={!!drawer} onOpenChange={(open) => !open && setDrawer(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          {drawer && (
+            <ExceptionDetails
+              exception={exceptions.find(x => x.id === drawer)!}
+              onClose={() => setDrawer(null)}
+              onUpdate={() => queryClient.invalidateQueries({ queryKey: ["global-exceptions"] })}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
