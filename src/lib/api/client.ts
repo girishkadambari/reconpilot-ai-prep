@@ -8,18 +8,18 @@ class ApiClient {
     if (contentType) {
       headers.append("Content-Type", contentType);
     }
-    
+
     const token = localStorage.getItem("rp_auth_token");
     if (token) {
       headers.append("Authorization", `Bearer ${token}`);
     }
-    
+
     return headers;
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
     const json = await response.json().catch(() => ({}));
-    
+
     if (!response.ok) {
       const error: ApiError & { status?: number } = {
         error: json.error || { code: "UNKNOWN_ERROR", message: "An unexpected error occurred", details: {} },
@@ -49,7 +49,7 @@ class ApiClient {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-       const error: ApiError & { status?: number } = {
+      const error: ApiError & { status?: number } = {
         error: json.error || { code: "UNKNOWN_ERROR", message: "An unexpected error occurred", details: {} },
         request_id: json.request_id || response.headers.get("X-Request-ID") || "unknown",
         status: response.status,
