@@ -131,51 +131,57 @@ export function Tabs({ tabs, value, onChange }: { tabs: { id: string; label: str
   );
 }
 
-export function Drawer({ open, onClose, title, children, footer }: {
-  open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode;
+export function Drawer({ open, onClose, title, children, footer, padding = true, width = "480px" }: {
+  open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode; padding?: boolean; width?: string;
 }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="absolute right-0 top-0 h-full w-full max-w-[480px] bg-white border-l border-border shadow-xl flex flex-col">
-        <div className="h-14 px-5 flex items-center justify-between border-b border-border">
-          <div className="text-[14px] font-semibold">{title}</div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">Close</button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+      <div className="absolute right-0 top-0 h-full w-full bg-white border-l border-border shadow-xl flex flex-col" style={{ maxWidth: width }}>
+        {title && (
+          <div className="h-14 px-5 flex items-center justify-between border-b border-border">
+            <div className="text-[14px] font-semibold">{title}</div>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">Close</button>
+          </div>
+        )}
+        <div className={["flex-1 overflow-y-auto", padding ? "p-5" : ""].join(" ")}>{children}</div>
         {footer && <div className="border-t border-border p-4 bg-[#FAFAFA]">{footer}</div>}
       </div>
     </div>
   );
 }
 
-export function Modal({ open, onClose, title, children, footer }: {
-  open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode;
+export function Modal({ open, onClose, title, description, children, footer }: {
+  open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode; footer?: ReactNode;
 }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 grid place-items-center">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative bg-white border border-border rounded-[14px] w-full max-w-md shadow-xl">
-        <div className="px-5 h-14 flex items-center justify-between border-b border-border">
-          <div className="text-[14px] font-semibold">{title}</div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">Close</button>
+      <div className="absolute inset-0 bg-black/30 animate-in fade-in duration-200" onClick={onClose} />
+      <div className="relative bg-white border border-border rounded-[14px] w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
+        <div className="px-5 pt-5 pb-5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-[16px] font-semibold">{title}</div>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">Close</button>
+          </div>
+          {description && <p className="text-[13px] text-muted-foreground mb-4">{description}</p>}
+          <div className="mt-4">{children}</div>
         </div>
-        <div className="p-5">{children}</div>
         {footer && <div className="border-t border-border p-4 bg-[#FAFAFA] rounded-b-[14px]">{footer}</div>}
       </div>
     </div>
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({ label, hint, description, children }: { label: string; hint?: string; description?: string; children: ReactNode }) {
   return (
-    <label className="block">
-      <div className="text-[12px] font-medium mb-1.5">{label}</div>
+    <div className="block mb-4 last:mb-0">
+      <div className="text-[13px] font-medium mb-1">{label}</div>
+      {description && <p className="text-[11.5px] text-muted-foreground mb-2">{description}</p>}
       {children}
       {hint && <div className="text-[11px] text-muted-foreground mt-1">{hint}</div>}
-    </label>
+    </div>
   );
 }
 
@@ -187,12 +193,14 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 }
 
 export function severityTone(s: string) {
-  return s === "CRITICAL" || s === "HIGH" ? "error" : s === "MEDIUM" ? "warning" : "neutral";
+  const v = String(s).toUpperCase();
+  return v === "CRITICAL" || v === "HIGH" ? "error" : v === "MEDIUM" ? "warning" : "neutral";
 }
 export function statusTone(s: string) {
-  if (["COMPLETED", "NORMALIZED", "READY", "APPROVED", "RESOLVED", "AUTO_MATCHED", "operational"].includes(s)) return "success";
-  if (["RUNNING", "PENDING_REVIEW", "PARSING", "QUEUED", "OPEN", "PARSED"].includes(s)) return "warning";
-  if (["FAILED", "PARSE_FAILED", "REJECTED", "degraded"].includes(s)) return "error";
+  const v = String(s).toUpperCase();
+  if (["COMPLETED", "NORMALIZED", "READY", "APPROVED", "RESOLVED", "AUTO_MATCHED", "OPERATIONAL"].includes(v)) return "success";
+  if (["RUNNING", "PENDING_REVIEW", "PARSING", "QUEUED", "OPEN", "PARSED", "IN_PROGRESS", "PENDING"].includes(v)) return "warning";
+  if (["FAILED", "PARSE_FAILED", "REJECTED", "DEGRADED"].includes(v)) return "error";
   return "neutral";
 }
 

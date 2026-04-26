@@ -12,6 +12,7 @@ export interface ApiResponse<T> {
     page_size: number;
     total_pages: number;
   };
+  stats?: Record<string, any>;
 }
 
 export interface ApiError {

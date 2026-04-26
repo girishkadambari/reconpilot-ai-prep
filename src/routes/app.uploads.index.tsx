@@ -52,12 +52,17 @@ function UploadsPage() {
     !q || u.file_name.toLowerCase().includes(q.toLowerCase())
   );
 
+  const openUploadModal = () => {
+    setUploadFile(null);
+    setOpen(true);
+  };
+
   return (
     <PageContainer>
       <PageHeader
         title="Uploads"
         description="Source files used to build reconciliation runs."
-        actions={<Btn onClick={() => setOpen(true)}><Upload className="size-4" /> Upload file</Btn>}
+        actions={<Btn onClick={openUploadModal}><Upload className="size-4" /> Upload file</Btn>}
       />
 
       <Card padding={false} className="mb-4">
@@ -83,7 +88,7 @@ function UploadsPage() {
         <EmptyState
           title={q || cat ? "No files match filters" : "No files yet"}
           description="Upload your first bank statement or gateway report to get started."
-          action={!q && !cat && <Btn onClick={() => setOpen(true)}><Upload className="size-4" /> Upload file</Btn>}
+          action={!q && !cat && <Btn onClick={openUploadModal}><Upload className="size-4" /> Upload file</Btn>}
         />
       ) : (
         <Table>
@@ -144,27 +149,54 @@ function UploadsPage() {
       >
         <div className="space-y-4">
           <Field label="File">
-            <div
-              className={[
-                "border border-dashed border-border rounded-[12px] p-8 text-center text-[12.5px] cursor-pointer transition-colors",
-                uploadFile ? "bg-purple-50 border-[#7C3AED]/30" : "bg-[#FAFAFA] hover:bg-secondary"
-              ].join(" ")}
-              onClick={() => document.getElementById("file-input")?.click()}
-            >
+            <div className="relative">
               <input
                 id="file-input"
                 type="file"
-                className="hidden"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setUploadFile(file);
+                  }
+                  // Reset value so the SAME file can be selected again if needed
+                  e.target.value = '';
+                }}
                 accept=".csv,.xlsx"
               />
-              {uploadFile ? (
-                <div className="text-foreground font-medium">{uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)</div>
-              ) : (
-                <div className="text-muted-foreground">
-                  Drop a CSV or XLSX file here, or <span className="text-foreground font-medium underline">browse</span>
-                </div>
-              )}
+              <label
+                htmlFor="file-input"
+                className={[
+                  "block border border-dashed border-border rounded-[12px] p-8 text-center text-[12.5px] cursor-pointer transition-all",
+                  uploadFile ? "bg-purple-50 border-[#7C3AED]/30" : "bg-[#FAFAFA] hover:bg-secondary hover:border-border/80"
+                ].join(" ")}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (e.dataTransfer.files?.[0]) {
+                    setUploadFile(e.dataTransfer.files[0]);
+                  }
+                }}
+              >
+                {uploadFile ? (
+                  <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
+                    <div className="text-[#1A1A1A] font-semibold text-[14.5px]">{uploadFile.name}</div>
+                    <div className="text-muted-foreground text-[11.5px] mt-1.5 font-medium">
+                      {(uploadFile.size / 1024).toFixed(1)} KB · <span className="text-[#7C3AED]">Ready to upload</span>
+                    </div>
+                    <div className="mt-4 text-[11px] text-[#7C3AED] font-bold uppercase tracking-wider">Click to change file</div>
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                      <Upload className="size-5 text-[#7C3AED]" />
+                    </div>
+                    <p className="text-[13px] font-medium text-foreground mb-1">Select a file to upload</p>
+                    <p className="text-[12px]">Drop a CSV or XLSX file here, or <span className="text-[#7C3AED] font-semibold underline">browse files</span></p>
+                  </div>
+                )}
+              </label>
             </div>
           </Field>
           <Field label="Category">

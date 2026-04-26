@@ -24,13 +24,13 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
 export function Shell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, workspace, logout, switchWorkspace } = useAuth();
-  
+
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  
+
   const wsDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: uploads } = useQuery({
     queryKey: ["uploads"],
     queryFn: () => uploadsApi.list(),
@@ -43,7 +43,14 @@ export function Shell() {
     enabled: !!user && wsDropdownOpen,
   });
 
+  const { data: globalExceptionsResponse } = useQuery({
+    queryKey: ["global-exception-count"],
+    queryFn: () => reconciliationRunsApi.listGlobalExceptions({ status: "OPEN" }),
+    enabled: !!user,
+  });
+
   const mappingCount = (uploads || []).filter(u => u.status === 'PARSED').length;
+  const exceptionCount = globalExceptionsResponse?.stats?.open || 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -84,7 +91,7 @@ export function Shell() {
         </div>
 
         <div className="relative px-3 mt-3" ref={wsDropdownRef}>
-          <button 
+          <button
             onClick={() => setWsDropdownOpen(!wsDropdownOpen)}
             className={[
               "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-[10px] border transition-all text-left",
@@ -122,8 +129,8 @@ export function Shell() {
                 ))}
               </div>
               <div className="mt-1.5 pt-1.5 border-t border-border/50 px-1">
-                <Link 
-                  to="/app/workspaces" 
+                <Link
+                  to="/app/workspaces"
                   onClick={() => setWsDropdownOpen(false)}
                   className="flex items-center justify-between px-2.5 py-2 rounded-[8px] text-[12.5px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                 >
@@ -160,6 +167,11 @@ export function Shell() {
                     {mappingCount}
                   </span>
                 )}
+                {item.label === "Exceptions" && exceptionCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-[#7C3AED]/10 text-[#7C3AED] text-[10px] font-bold">
+                    {exceptionCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -194,9 +206,9 @@ export function Shell() {
               <Bell className="size-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
             </button>
-            
+
             <div className="relative ml-1" ref={userDropdownRef}>
-              <button 
+              <button
                 className={[
                   "h-9 w-9 rounded-full bg-foreground text-white text-[12.5px] font-bold hover:opacity-90 transition-all shadow-sm ring-offset-2 ring-offset-white",
                   userDropdownOpen ? "ring-2 ring-[#7C3AED]/40" : ""
@@ -215,18 +227,18 @@ export function Shell() {
                       {workspace.role}
                     </div>
                   </div>
-                  
+
                   <div className="px-1.5 py-1">
-                    <Link 
-                      to="/app/settings" 
+                    <Link
+                      to="/app/settings"
                       onClick={() => setUserDropdownOpen(false)}
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                     >
                       <User className="size-4" />
                       View Profile
                     </Link>
-                    <Link 
-                      to="/app/settings" 
+                    <Link
+                      to="/app/settings"
                       search={{ tab: 'workspace' }}
                       onClick={() => setUserDropdownOpen(false)}
                       className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
@@ -241,7 +253,7 @@ export function Shell() {
                   </div>
 
                   <div className="px-1.5 pt-1 border-t border-border/50">
-                    <button 
+                    <button
                       onClick={() => {
                         setUserDropdownOpen(false);
                         logout();

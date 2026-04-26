@@ -42,6 +42,23 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
+  async getWithResponse<T>(path: string): Promise<ApiResponse<T>> {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+       const error: ApiError & { status?: number } = {
+        error: json.error || { code: "UNKNOWN_ERROR", message: "An unexpected error occurred", details: {} },
+        request_id: json.request_id || response.headers.get("X-Request-ID") || "unknown",
+        status: response.status,
+      };
+      throw error;
+    }
+    return json as ApiResponse<T>;
+  }
+
   async post<T>(path: string, data?: any): Promise<T> {
     const isFormData = data instanceof FormData;
     const response = await fetch(`${BASE_URL}${path}`, {
@@ -67,6 +84,23 @@ class ApiClient {
       headers: this.getHeaders(),
     });
     return this.handleResponse<T>(response);
+  }
+
+  async getBlob(path: string): Promise<Blob> {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) {
+      const json = await response.json().catch(() => ({}));
+      const error: ApiError & { status?: number } = {
+        error: json.error || { code: "DOWNLOAD_FAILED", message: "Failed to download file", details: {} },
+        request_id: json.request_id || response.headers.get("X-Request-ID") || "unknown",
+        status: response.status,
+      };
+      throw error;
+    }
+    return response.blob();
   }
 }
 

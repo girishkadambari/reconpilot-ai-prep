@@ -6,6 +6,7 @@ import { reconciliationRunsApi, exportsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ExceptionDetails } from "@/components/app/ExceptionDetails";
 
 export const Route = createFileRoute("/app/runs/$runId")({
   head: () => ({ meta: [{ title: "Run detail · ReconPilot" }] }),
@@ -236,73 +237,72 @@ function RunDetail() {
           </Table>
         )}
       </div>
-
-      <Drawer open={!!drawer} onClose={() => setDrawer(null)} title={drawer?.kind === "match" ? "Match evidence" : "Exception details"}>
-        <div className="p-6">
+      <Drawer
+        padding={false}
+        open={!!drawer}
+        onClose={() => setDrawer(null)}
+        width="600px"
+      >
+        <div className="h-full overflow-hidden">
           {evidenceLoading ? (
             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>
           ) : evidence ? (
-            <div className="space-y-6">
-              {drawer?.kind === "match" ? (
-                <>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Source record</div>
-                      <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[400px]">
-                        {Object.entries(evidence.source || {}).map(([k, v]) => (
-                          <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Target record</div>
-                      <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[400px]">
-                        {Object.entries(evidence.target || {}).map(([k, v]) => (
-                          <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
-                    <div>
-                      <div className="text-[11px] font-bold text-blue-600 uppercase">Match Strategy</div>
-                      <div className="text-[14px] font-medium">{evidence.match_strategy}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[11px] font-bold text-blue-600 uppercase">Confidence</div>
-                      <div className="text-[18px] font-bold">{evidence.confidence_score}%</div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-6">
-                  <div className="p-4 rounded-lg bg-red-50/50 border border-red-100 space-y-1">
-                    <div className="text-[11px] font-bold text-red-600 uppercase">Exception Type</div>
-                    <div className="text-[15px] font-semibold">{evidence.exception_type}</div>
-                    <p className="text-[13px] text-red-700 mt-2">{evidence.suggested_action}</p>
-                  </div>
-
-                  {evidence.ai_explanation && (
-                    <div className="p-4 rounded-lg bg-purple-50/50 border border-purple-100 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="size-4 text-purple-600" />
-                        <div className="text-[12px] font-bold text-purple-600 uppercase">AI Interpretation</div>
-                      </div>
-                      <div className="text-[13.5px] leading-relaxed whitespace-pre-wrap italic">"{evidence.ai_explanation}"</div>
-                    </div>
-                  )}
-
+            drawer?.kind === "match" ? (
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b">
+                  <h2 className="text-[16px] font-semibold">Match evidence</h2>
+                  <button onClick={() => setDrawer(null)} className="text-[13px] font-medium text-muted-foreground hover:text-foreground">Close</button>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Record details</div>
-                    <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[500px]">
-                      {Object.entries(evidence.details_json || {}).map(([k, v]) => (
-                        <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
-                      ))}
+                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Source record</div>
+                    <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
+                      <table className="w-full text-[12px] font-mono">
+                        <tbody>
+                          {Object.entries((evidence as any).source || {}).map(([k, v], i) => (
+                            <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
+                              <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
+                              <td className="px-3 py-2 break-all">{String(v)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground px-1">Target record</div>
+                    <div className="rounded-[12px] border overflow-hidden max-h-[400px] overflow-y-auto">
+                      <table className="w-full text-[12px] font-mono">
+                        <tbody>
+                          {Object.entries((evidence as any).target || {}).map(([k, v], i) => (
+                            <tr key={k} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
+                              <td className="px-3 py-2 text-muted-foreground w-1/3 border-r">{k}</td>
+                              <td className="px-3 py-2 break-all">{String(v)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+                <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-blue-600 uppercase">Match Strategy</div>
+                    <div className="text-[14px] font-medium">{evidence.match_strategy}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[11px] font-bold text-blue-600 uppercase">Confidence</div>
+                    <div className="text-[18px] font-bold">{evidence.confidence_score}%</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <ExceptionDetails
+                exception={evidence as any}
+                onClose={() => setDrawer(null)}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ["run-exceptions", runId] })}
+              />
+            )
           ) : (
             <div className="py-20 text-center text-muted-foreground italic">Evidence not found.</div>
           )}
