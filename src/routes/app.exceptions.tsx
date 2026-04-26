@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Drawer, Select, severityTone, statusTone } from "@/components/app/ui";
+import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Drawer, Select, severityTone, statusTone, CopyButton } from "@/components/app/ui";
 import { reconciliationRunsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Search, AlertTriangle, Filter, Loader2, Info } from "lucide-react";
@@ -134,8 +134,16 @@ function ExceptionsPage() {
           </thead>
           <tbody>
             {exceptions.map(e => (
-              <tr key={e.id} className="hover:bg-[#FAFAFA]">
-                <Td><Badge tone="neutral">{formatLabel(e.exception_type, EXCEPTION_TYPE_LABELS)}</Badge></Td>
+              <tr key={e.id} className="hover:bg-[#FAFAFA] group">
+                <Td>
+                  <div className="flex flex-col gap-0.5">
+                    <Badge tone="neutral">{formatLabel(e.exception_type, EXCEPTION_TYPE_LABELS)}</Badge>
+                    <div className="flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[80px]">{e.id}</span>
+                      <CopyButton text={e.id} className="scale-75" />
+                    </div>
+                  </div>
+                </Td>
                 <Td><Badge tone={severityTone(e.severity)}>{formatLabel(e.severity, SEVERITY_LABELS)}</Badge></Td>
                 <Td className="text-right tabular-nums font-medium whitespace-nowrap">
                   ₹{e.amount.toLocaleString()} <span className="text-muted-foreground text-[11px] font-normal">{e.currency}</span>

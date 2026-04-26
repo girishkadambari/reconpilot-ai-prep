@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Modal, Field, Input, Select, statusTone, EmptyState, formatDate } from "@/components/app/ui";
+import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Modal, Field, Input, Select, statusTone, EmptyState, formatDate, CopyButton } from "@/components/app/ui";
 import { Upload, Eye, Trash2, Search, Loader2 } from "lucide-react";
 import { uploadsApi, FileCategory } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -105,10 +105,13 @@ function UploadsPage() {
           </thead>
           <tbody>
             {rows.map(u => (
-              <tr key={u.id} className="hover:bg-[#FAFAFA]">
+              <tr key={u.id} className="hover:bg-[#FAFAFA] group">
                 <Td>
                   <div className="font-medium">{u.file_name}</div>
-                  <div className="text-[11px] text-muted-foreground">{u.id}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="text-[11px] text-muted-foreground font-mono">{u.id}</div>
+                    <CopyButton text={u.id} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </Td>
                 <Td><Badge tone="neutral">{formatLabel(u.file_category, FILE_CATEGORY_LABELS)}</Badge></Td>
                 <Td><Badge tone={statusTone(u.status)}>{formatLabel(u.status, NORMALIZATION_STATUS_LABELS)}</Badge></Td>

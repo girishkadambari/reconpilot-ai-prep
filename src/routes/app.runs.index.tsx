@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Modal, Field, Input, Select, statusTone, EmptyState, formatDate } from "@/components/app/ui";
+import { Card, PageContainer, PageHeader, Btn, Badge, Table, Th, Td, Modal, Field, Input, Select, statusTone, EmptyState, formatDate, CopyButton } from "@/components/app/ui";
 import { Plus, ChevronRight, Loader2 } from "lucide-react";
 import { reconciliationRunsApi, uploadsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -80,10 +80,13 @@ function RunsPage() {
           </thead>
           <tbody>
             {(runs || []).map(r => (
-              <tr key={r.id} className="hover:bg-[#FAFAFA]">
+              <tr key={r.id} className="hover:bg-[#FAFAFA] group">
                 <Td>
                   <div className="font-medium">{r.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{r.id}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="text-[11px] text-muted-foreground font-mono">{r.id}</div>
+                    <CopyButton text={r.id} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </Td>
                 <Td><Badge tone={statusTone(r.status)}>{formatLabel(r.status, RUN_STATUS_LABELS)}</Badge></Td>
                 <Td className="text-right tabular-nums">2</Td>

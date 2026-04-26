@@ -1,9 +1,14 @@
 import { Sparkles, Info, AlertTriangle, X } from "lucide-react";
-import { Card, Badge, Btn, severityTone, statusTone } from "./ui";
+import { Card, Badge, Btn, severityTone, statusTone, CopyButton } from "./ui";
 import { ExceptionItem } from "@/lib/api/types";
 import { reconciliationRunsApi } from "@/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { 
+  EXCEPTION_TYPE_LABELS, 
+  EXCEPTION_STATUS_LABELS,
+  formatLabel 
+} from "@/lib/utils/formatters";
 
 interface ExceptionDetailsProps {
   exception: ExceptionItem;
@@ -46,14 +51,17 @@ export function ExceptionDetails({ exception, onClose, onUpdate }: ExceptionDeta
         {/* Exception Type Card */}
         <div className="p-5 rounded-[12px] bg-red-50/30 border border-red-100/50">
           <div className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1.5">EXCEPTION TYPE</div>
-          <div className="text-[16px] font-bold text-[#1A1A1A]">{exception.exception_type}</div>
+          <div className="text-[16px] font-bold text-[#1A1A1A]">{formatLabel(exception.exception_type, EXCEPTION_TYPE_LABELS)}</div>
         </div>
 
         {/* AI Interpretation Card */}
         <div className="p-6 rounded-[12px] bg-[#F5F3FF] border border-[#DDD6FE]/50 relative overflow-hidden">
-          <div className="flex items-center gap-2 mb-3">
-             <Sparkles className="size-4 text-[#7C3AED]" />
-             <div className="text-[10px] font-bold text-[#7C3AED] uppercase tracking-widest">AI INTERPRETATION</div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-[#7C3AED]" />
+              <div className="text-[10px] font-bold text-[#7C3AED] uppercase tracking-widest">AI INTERPRETATION</div>
+            </div>
+            {exception.ai_explanation && <CopyButton text={exception.ai_explanation} label="Copy info" />}
           </div>
           
           {exception.ai_explanation ? (
@@ -88,16 +96,50 @@ export function ExceptionDetails({ exception, onClose, onUpdate }: ExceptionDeta
                   {(exception as any).details_json && Object.entries((exception as any).details_json || {}).map(([key, value], i) => (
                     <tr key={key} className={i % 2 === 0 ? "bg-white" : "bg-secondary/10"}>
                       <td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r border-border/50">{key}</td>
-                      <td className="px-4 py-2.5 text-foreground break-all">{String(value)}</td>
+                      <td className="px-4 py-2.5 text-foreground break-all">
+                        <div className="flex items-center justify-between gap-4">
+                          <span>{String(value)}</span>
+                          <CopyButton text={String(value)} />
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {/* Fallback if no details_json */}
                   {!((exception as any).details_json) && (
                     <>
-                      <tr><td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">id</td><td className="px-4 py-2.5">{exception.id}</td></tr>
-                      <tr className="bg-secondary/10"><td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">run_id</td><td className="px-4 py-2.5">{exception.run_id}</td></tr>
-                      <tr><td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">status</td><td className="px-4 py-2.5"><Badge tone={statusTone(exception.status)}>{exception.status}</Badge></td></tr>
-                      <tr className="bg-secondary/10"><td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">amount</td><td className="px-4 py-2.5 font-sans">₹{exception.amount.toLocaleString()} {exception.currency}</td></tr>
+                      <tr>
+                        <td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">id</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono">{exception.id}</span>
+                            <CopyButton text={exception.id} />
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className="bg-secondary/10">
+                        <td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">run_id</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono">{exception.run_id}</span>
+                            <CopyButton text={exception.run_id} />
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">status</td>
+                        <td className="px-4 py-2.5">
+                          <Badge tone={statusTone(exception.status)}>{formatLabel(exception.status, EXCEPTION_STATUS_LABELS)}</Badge>
+                        </td>
+                      </tr>
+                      <tr className="bg-secondary/10">
+                        <td className="px-4 py-2.5 text-muted-foreground w-1/3 border-r">amount</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-sans">₹{exception.amount.toLocaleString()} {exception.currency}</span>
+                            <CopyButton text={String(exception.amount)} />
+                          </div>
+                        </td>
+                      </tr>
                     </>
                   )}
                 </tbody>

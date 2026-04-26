@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { Loader2, Check, Copy } from "lucide-react";
 import { format, isValid } from "date-fns";
 
 export function PageContainer({ children }: { children: ReactNode }) {
@@ -190,6 +190,31 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
 }
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={["w-full h-9 px-2.5 rounded-[10px] border border-border bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED]/40", props.className].join(" ")} />;
+}
+
+export function CopyButton({ text, label, className = "" }: { text: string; label?: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={[
+        "inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors",
+        className
+      ].join(" ")}
+      title={label || "Copy to clipboard"}
+    >
+      {copied ? <Check className="size-3.5 text-green-600" /> : <Copy className="size-3.5" />}
+      {label && <span className="text-[12px]">{label}</span>}
+    </button>
+  );
 }
 
 export function severityTone(s: string) {
