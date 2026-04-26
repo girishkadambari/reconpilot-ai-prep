@@ -17,6 +17,14 @@ export const authApi = {
 export const workspacesApi = {
   list: () => apiClient.get<T.Workspace[]>("/api/workspaces"),
   get: (id: string) => apiClient.get<T.Workspace>(`/api/workspaces/${id}`),
+  create: (data: { name: string }) => apiClient.post<T.Workspace>("/api/workspaces", data),
+  update: (id: string, data: { name: string }) => 
+    apiClient.patch<T.Workspace>(`/api/workspaces/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/api/workspaces/${id}`),
+  switch: (id: string) => apiClient.post<{ access_token: string }>(`/api/workspaces/${id}/switch`),
+  listMembers: (id: string) => apiClient.get<T.WorkspaceMember[]>(`/api/workspaces/${id}/members`),
+  inviteMember: (id: string, data: { email: string; role: string }) => 
+    apiClient.post<T.WorkspaceMember>(`/api/workspaces/${id}/members/invite`, data),
 };
 
 /**

@@ -37,6 +37,19 @@ export interface Workspace {
   id: string;
   name: string;
   slug: string;
+  role: string; // Current user's role
+  status: string;
+  created_at: string;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  user_email: string;
+  role: string;
+  status: string;
+  joined_at: string | null;
 }
 
 export interface AuthContext {

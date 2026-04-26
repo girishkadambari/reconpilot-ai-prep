@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi, User, Workspace } from '@/lib/api';
+import { authApi, workspacesApi, User, Workspace } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface AuthContextType {
@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   refresh: () => Promise<void>;
+  switchWorkspace: (workspaceId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     refresh: async () => { await refetch(); },
+    switchWorkspace: async (workspaceId: string) => {
+      const res = await workspacesApi.switch(workspaceId);
+      if (res.access_token) {
+        login(res.access_token);
+      }
+    },
   };
 
   return <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>;
