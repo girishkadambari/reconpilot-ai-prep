@@ -16,7 +16,7 @@ function RunDetail() {
   const { runId } = Route.useParams();
   const [tab, setTab] = useState("summary");
   const [drawer, setDrawer] = useState<{ kind: "match" | "exception"; id: string } | null>(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: run, isLoading: runLoading } = useQuery({
@@ -46,6 +46,16 @@ function RunDetail() {
     queryKey: ["run-exports", runId],
     queryFn: () => exportsApi.list(runId),
     enabled: tab === "exports",
+  });
+
+  const { data: evidence, isLoading: evidenceLoading } = useQuery({
+    queryKey: ["evidence", runId, drawer?.kind, drawer?.id],
+    queryFn: () => {
+      if (drawer?.kind === "match") return reconciliationRunsApi.getMatchEvidence(runId, drawer.id);
+      // For exceptions, we already have the data in 'exceptions' array, but let's see if we need a separate fetch
+      return exceptions?.find(e => e.id === drawer?.id);
+    },
+    enabled: !!drawer,
   });
 
   const executeMutation = useMutation({
@@ -80,7 +90,7 @@ function RunDetail() {
             <Btn variant="secondary" onClick={() => executeMutation.mutate()} loading={executeMutation.isPending} disabled={run.status === "PROCESSING"}>
               <Play className="size-4" /> Run reconciliation
             </Btn>
-            <Btn variant="secondary" onClick={() => reconciliationRunsApi.explainAll(runId).then(()=>toast.success("Batch explanation started"))}>
+            <Btn variant="secondary" onClick={() => reconciliationRunsApi.explainAll(runId).then(() => toast.success("Batch explanation started"))}>
               <Sparkles className="size-4" /> Explain all exceptions
             </Btn>
             <Btn onClick={() => exportMutation.mutate()} loading={exportMutation.isPending}>
@@ -109,7 +119,7 @@ function RunDetail() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <Stat label="Total source rows" value={run.total_source_rows.toLocaleString()} />
               <Stat label="Matched" value={run.matched_count.toLocaleString()} />
-              <Stat label="Match rate" value={`${(run.match_rate*100).toFixed(1)}%`} />
+              <Stat label="Match rate" value={`${run.match_rate_pct ?? 0}%`} />
               <Stat label="Open exceptions" value={String(run.exception_count)} />
             </div>
 
@@ -172,17 +182,24 @@ function RunDetail() {
                   <Td className="font-mono text-[11px] text-muted-foreground">{m.id}</Td>
                   <Td>
                     <div className="flex items-center justify-end gap-2">
-                      <div className="w-16 h-1.5 rounded-full bg-secondary overflow-hidden"><div className="h-full bg-[#7C3AED]" style={{ width: `${m.confidence*100}%` }} /></div>
-                      <span className="text-[12px] text-muted-foreground tabular-nums">{(m.confidence*100).toFixed(0)}%</span>
+                      <div className="w-16 h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className="h-full bg-[#7C3AED]"
+                          style={{ width: `${m.confidence_score}%` }}
+                        />
+                      </div>
+                      <span className="text-[12px] text-muted-foreground tabular-nums">
+                        {m.confidence_score}%
+                      </span>
                     </div>
                   </Td>
                   <Td className="font-mono text-[11px] text-muted-foreground">{m.match_strategy}</Td>
                   <Td><Badge tone={statusTone(m.status)}>{m.status}</Badge></Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Btn size="sm" variant="ghost">Evidence</Btn>
-                      <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.reviewMatch(runId, m.id, "APPROVED").then(()=>queryClient.invalidateQueries({queryKey: ["run-matches", runId]}))}>Approve</Btn>
-                      <Btn size="sm" variant="ghost" onClick={() => reconciliationRunsApi.reviewMatch(runId, m.id, "REJECTED").then(()=>queryClient.invalidateQueries({queryKey: ["run-matches", runId]}))}>Reject</Btn>
+                      <Btn size="sm" variant="ghost" onClick={() => setDrawer({ kind: "match", id: m.id })}>Evidence</Btn>
+                      <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.reviewMatch(runId, m.id, "APPROVED").then(() => queryClient.invalidateQueries({ queryKey: ["run-matches", runId] }))}>Approve</Btn>
+                      <Btn size="sm" variant="ghost" onClick={() => reconciliationRunsApi.reviewMatch(runId, m.id, "REJECTED").then(() => queryClient.invalidateQueries({ queryKey: ["run-matches", runId] }))}>Reject</Btn>
                     </div>
                   </Td>
                 </tr>
@@ -192,7 +209,7 @@ function RunDetail() {
           </Table>
         )}
 
-        {tab === "exceptions" && <ExceptionTable exceptions={exceptions || []} runId={runId} onUpdate={() => queryClient.invalidateQueries({queryKey: ["run-exceptions", runId]})} onView={(id)=>setDrawer({ kind: "exception", id })} />}
+        {tab === "exceptions" && <ExceptionTable exceptions={exceptions || []} runId={runId} onUpdate={() => queryClient.invalidateQueries({ queryKey: ["run-exceptions", runId] })} onView={(id) => setDrawer({ kind: "exception", id })} />}
 
         {tab === "exports" && (
           <Table>
@@ -220,8 +237,76 @@ function RunDetail() {
         )}
       </div>
 
-      <Drawer open={!!drawer} onClose={()=>setDrawer(null)} title={drawer?.kind === "match" ? "Match evidence" : "Exception details"}>
-        <div className="p-10 text-center text-muted-foreground">Detailed record evidence view coming soon.</div>
+      <Drawer open={!!drawer} onClose={() => setDrawer(null)} title={drawer?.kind === "match" ? "Match evidence" : "Exception details"}>
+        <div className="p-6">
+          {evidenceLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>
+          ) : evidence ? (
+            <div className="space-y-6">
+              {drawer?.kind === "match" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Source record</div>
+                      <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[400px]">
+                        {Object.entries(evidence.source || {}).map(([k, v]) => (
+                          <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Target record</div>
+                      <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[400px]">
+                        {Object.entries(evidence.target || {}).map(([k, v]) => (
+                          <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] font-bold text-blue-600 uppercase">Match Strategy</div>
+                      <div className="text-[14px] font-medium">{evidence.match_strategy}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[11px] font-bold text-blue-600 uppercase">Confidence</div>
+                      <div className="text-[18px] font-bold">{evidence.confidence_score}%</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  <div className="p-4 rounded-lg bg-red-50/50 border border-red-100 space-y-1">
+                    <div className="text-[11px] font-bold text-red-600 uppercase">Exception Type</div>
+                    <div className="text-[15px] font-semibold">{evidence.exception_type}</div>
+                    <p className="text-[13px] text-red-700 mt-2">{evidence.suggested_action}</p>
+                  </div>
+
+                  {evidence.ai_explanation && (
+                    <div className="p-4 rounded-lg bg-purple-50/50 border border-purple-100 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="size-4 text-purple-600" />
+                        <div className="text-[12px] font-bold text-purple-600 uppercase">AI Interpretation</div>
+                      </div>
+                      <div className="text-[13.5px] leading-relaxed whitespace-pre-wrap italic">"{evidence.ai_explanation}"</div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div className="text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Record details</div>
+                    <div className="p-4 rounded-lg bg-secondary/30 border text-[13px] font-mono space-y-1 overflow-auto max-h-[500px]">
+                      {Object.entries(evidence.details_json || {}).map(([k, v]) => (
+                        <div key={k} className="flex justify-between gap-10 border-b border-white/10 pb-1 last:border-0"><span className="text-muted-foreground">{k}</span><span>{String(v)}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-20 text-center text-muted-foreground italic">Evidence not found.</div>
+          )}
+        </div>
       </Drawer>
     </PageContainer>
   );
@@ -241,7 +326,10 @@ function ExceptionTable({ exceptions, runId, onUpdate, onView }: { exceptions: a
           <tr key={e.id} className="hover:bg-[#FAFAFA]">
             <Td><Badge tone="neutral">{e.exception_type}</Badge></Td>
             <Td><Badge tone={severityTone(e.severity)}>{e.severity}</Badge></Td>
-            <Td className="text-right tabular-nums font-medium">₹{e.amount.toLocaleString()} <span className="text-muted-foreground text-[11px]">{e.currency}</span></Td>
+            <Td className="text-right tabular-nums font-medium text-[13.5px]">
+              ₹{(e.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-muted-foreground text-[11px] ml-1">{e.currency}</span>
+            </Td>
             <Td><Badge tone={statusTone(e.status)}>{e.status}</Badge></Td>
             <Td className="text-muted-foreground max-w-sm">
               {e.ai_explanation ? (
@@ -252,11 +340,11 @@ function ExceptionTable({ exceptions, runId, onUpdate, onView }: { exceptions: a
             </Td>
             <Td className="text-right">
               <div className="flex items-center justify-end gap-1">
-                <Btn size="sm" variant="ghost" onClick={()=>onView(e.id)}>View</Btn>
-                <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.explainException(runId, e.id).then(()=>onUpdate())}>
+                <Btn size="sm" variant="ghost" onClick={() => onView(e.id)}>View</Btn>
+                <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.explainException(runId, e.id).then(() => onUpdate())}>
                   <Sparkles className="size-3.5" /> Explain
                 </Btn>
-                <Btn size="sm" onClick={() => reconciliationRunsApi.resolveException(runId, e.id, "RESOLVED").then(()=>onUpdate())}>Resolve</Btn>
+                <Btn size="sm" onClick={() => reconciliationRunsApi.resolveException(runId, e.id, "RESOLVED").then(() => onUpdate())}>Resolve</Btn>
               </div>
             </Td>
           </tr>
