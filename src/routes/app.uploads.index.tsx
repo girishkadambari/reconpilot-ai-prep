@@ -5,6 +5,11 @@ import { Upload, Eye, Trash2, Search, Loader2 } from "lucide-react";
 import { uploadsApi, FileCategory } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  FILE_CATEGORY_LABELS,
+  NORMALIZATION_STATUS_LABELS,
+  formatLabel
+} from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/uploads/")({
   head: () => ({ meta: [{ title: "Uploads · ReconPilot" }] }),
@@ -73,7 +78,7 @@ function UploadsPage() {
           </div>
           <Select value={cat} onChange={(e) => setCat(e.target.value)} className="max-w-[240px]">
             <option value="">All categories</option>
-            {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+            {CATS.map(c => <option key={c} value={c}>{formatLabel(c, FILE_CATEGORY_LABELS)}</option>)}
           </Select>
           <div className="ml-auto text-[12px] text-muted-foreground">{rows.length} files</div>
         </div>
@@ -105,8 +110,8 @@ function UploadsPage() {
                   <div className="font-medium">{u.file_name}</div>
                   <div className="text-[11px] text-muted-foreground">{u.id}</div>
                 </Td>
-                <Td><Badge tone="neutral">{u.file_category}</Badge></Td>
-                <Td><Badge tone={statusTone(u.status)}>{u.status}</Badge></Td>
+                <Td><Badge tone="neutral">{formatLabel(u.file_category, FILE_CATEGORY_LABELS)}</Badge></Td>
+                <Td><Badge tone={statusTone(u.status)}>{formatLabel(u.status, NORMALIZATION_STATUS_LABELS)}</Badge></Td>
                 <Td className="text-right tabular-nums">{(u.row_count ?? 0).toLocaleString()}</Td>
                 <Td className="text-muted-foreground">{formatDate(u.created_at)}</Td>
                 <Td>
@@ -201,7 +206,7 @@ function UploadsPage() {
           </Field>
           <Field label="Category">
             <Select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)}>
-              {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATS.map(c => <option key={c} value={c}>{formatLabel(c, FILE_CATEGORY_LABELS)}</option>)}
             </Select>
           </Field>
         </div>

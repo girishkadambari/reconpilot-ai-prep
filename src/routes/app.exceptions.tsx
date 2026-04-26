@@ -6,6 +6,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Search, AlertTriangle, Filter, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { ExceptionDetails } from "@/components/app/ExceptionDetails";
+import { 
+  EXCEPTION_TYPE_LABELS, 
+  SEVERITY_LABELS, 
+  EXCEPTION_STATUS_LABELS, 
+  formatLabel 
+} from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/exceptions")({
   head: () => ({ meta: [{ title: "Exceptions · ReconPilot" }] }),
@@ -85,20 +91,19 @@ function ExceptionsPage() {
           </div>
           <Select value={status} onChange={(e)=>setStatus(e.target.value)} className="max-w-[160px]">
             <option value="">All status</option>
-            <option value="OPEN">OPEN</option>
-            <option value="RESOLVED">RESOLVED</option>
-            <option value="IGNORED">IGNORED</option>
+            {Object.entries(EXCEPTION_STATUS_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
           </Select>
           <Select value={severity} onChange={(e)=>setSeverity(e.target.value)} className="max-w-[160px]">
             <option value="">All severities</option>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
+            {Object.entries(SEVERITY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
           </Select>
           <Select value={type} onChange={(e)=>setType(e.target.value)} className="max-w-[260px]">
             <option value="">All types</option>
-            {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {TYPES.map(t => <option key={t} value={t}>{formatLabel(t, EXCEPTION_TYPE_LABELS)}</option>)}
           </Select>
           <div className="ml-auto inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
             <Filter className="size-3.5" /> {pagination?.total || 0} results
@@ -130,8 +135,8 @@ function ExceptionsPage() {
           <tbody>
             {exceptions.map(e => (
               <tr key={e.id} className="hover:bg-[#FAFAFA]">
-                <Td><Badge tone="neutral">{e.exception_type}</Badge></Td>
-                <Td><Badge tone={severityTone(e.severity)}>{e.severity}</Badge></Td>
+                <Td><Badge tone="neutral">{formatLabel(e.exception_type, EXCEPTION_TYPE_LABELS)}</Badge></Td>
+                <Td><Badge tone={severityTone(e.severity)}>{formatLabel(e.severity, SEVERITY_LABELS)}</Badge></Td>
                 <Td className="text-right tabular-nums font-medium whitespace-nowrap">
                   ₹{e.amount.toLocaleString()} <span className="text-muted-foreground text-[11px] font-normal">{e.currency}</span>
                 </Td>
@@ -140,7 +145,7 @@ function ExceptionsPage() {
                     {e.ai_explanation || "No AI explanation available yet. Click explain to generate."}
                   </div>
                 </Td>
-                <Td><Badge tone={statusTone(e.status)}>{e.status}</Badge></Td>
+                <Td><Badge tone={statusTone(e.status)}>{formatLabel(e.status, EXCEPTION_STATUS_LABELS)}</Badge></Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <Btn size="sm" variant="ghost" onClick={()=>setDrawer(e.id)}>View</Btn>

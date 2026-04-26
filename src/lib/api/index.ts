@@ -25,6 +25,8 @@ export const workspacesApi = {
   listMembers: (id: string) => apiClient.get<T.WorkspaceMember[]>(`/api/workspaces/${id}/members`),
   inviteMember: (id: string, data: { email: string; role: string }) =>
     apiClient.post<T.WorkspaceMember>(`/api/workspaces/${id}/members/invite`, data),
+  listActivity: (id: string, limit = 50) =>
+    apiClient.get<any[]>(`/api/workspaces/${id}/activity?limit=${limit}`),
 };
 
 /**

@@ -2,12 +2,17 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, Upload, Columns3, RefreshCw, AlertTriangle,
-  Download, Building2, Settings, Activity, Bell, MessageSquare, ChevronDown, Search, LogOut, Check, ChevronRight, User, Shield
+  Download, Building2, Settings, Bell, MessageSquare, ChevronDown, Search, LogOut, Check, ChevronRight, User, Shield, Loader2
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { uploadsApi, workspacesApi } from "@/lib/api";
+import { uploadsApi, workspacesApi, reconciliationRunsApi } from "@/lib/api";
 import { toast } from "sonner";
+import { 
+  EVENT_TYPE_LABELS, 
+  ENTITY_TYPE_LABELS, 
+  formatLabel 
+} from "@/lib/utils/formatters";
 
 const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -18,7 +23,6 @@ const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/app/exports", label: "Exports", icon: Download },
   { to: "/app/workspaces", label: "Workspaces", icon: Building2 },
   { to: "/app/settings", label: "Settings", icon: Settings },
-  { to: "/app/health", label: "Service Health", icon: Activity },
 ];
 
 export function Shell() {
@@ -27,9 +31,11 @@ export function Shell() {
 
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   const wsDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const { data: uploads } = useQuery({
     queryKey: ["uploads"],
@@ -41,6 +47,12 @@ export function Shell() {
     queryKey: ["workspaces"],
     queryFn: () => workspacesApi.list(),
     enabled: !!user && wsDropdownOpen,
+  });
+
+  const { data: activity, isLoading: activityLoading } = useQuery({
+    queryKey: ["activity", workspace?.id],
+    queryFn: () => workspacesApi.listActivity(workspace!.id),
+    enabled: !!user && !!workspace && notificationOpen,
   });
 
   const { data: globalExceptionsResponse } = useQuery({
@@ -59,6 +71,9 @@ export function Shell() {
       }
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setNotificationOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -202,10 +217,65 @@ export function Shell() {
             <button className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] border border-border text-[13px] hover:bg-secondary font-medium transition-colors">
               <MessageSquare className="size-4" /> Feedback
             </button>
-            <button className="relative h-9 w-9 grid place-items-center rounded-[10px] border border-border hover:bg-secondary transition-colors">
-              <Bell className="size-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-            </button>
+            <div className="relative" ref={notificationRef}>
+              <button
+                className={[
+                  "relative h-9 w-9 grid place-items-center rounded-[10px] border transition-colors",
+                  notificationOpen ? "border-[#7C3AED]/40 bg-white shadow-sm ring-2 ring-[#7C3AED]/5" : "border-border hover:bg-secondary"
+                ].join(" ")}
+                onClick={() => setNotificationOpen(!notificationOpen)}
+              >
+                <Bell className="size-4" />
+                {activity && activity.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 z-50 bg-white border border-border rounded-[14px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
+                  <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+                    <div className="text-[14px] font-semibold">Activity Logs</div>
+                    <Badge tone="neutral" className="text-[10px]">Recent {activity?.length || 0}</Badge>
+                  </div>
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {activityLoading ? (
+                      <div className="p-8 text-center"><Loader2 className="size-5 animate-spin mx-auto text-muted-foreground" /></div>
+                    ) : (activity || []).length === 0 ? (
+                      <div className="p-8 text-center text-[12px] text-muted-foreground">No recent activity</div>
+                    ) : (
+                      <div className="divide-y divide-border/50">
+                        {activity.map((ev: any) => (
+                          <div key={ev.id} className="p-3.5 hover:bg-secondary/30 transition-colors">
+                            <div className="flex gap-3">
+                              <div className="w-8 h-8 rounded-full bg-secondary grid place-items-center shrink-0">
+                                {ev.event_type.includes('UPLOAD') ? <Upload className="size-3.5" /> :
+                                  ev.event_type.includes('RUN') ? <RefreshCw className="size-3.5" /> :
+                                    ev.event_type.includes('EXPORT') ? <Download className="size-3.5" /> :
+                                      <Activity className="size-3.5" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[12.5px] font-medium text-foreground leading-snug">
+                                  {formatLabel(ev.event_type, EVENT_TYPE_LABELS)}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+                                  By {ev.actor_name || 'System'} • {formatLabel(ev.entity_type, ENTITY_TYPE_LABELS)}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground/70 mt-1 uppercase tracking-wider font-bold">
+                                  {new Date(ev.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2 border-t border-border/50 bg-secondary/10">
+                    <Btn variant="secondary" size="sm" className="w-full text-[11px]">View all logs</Btn>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="relative ml-1" ref={userDropdownRef}>
               <button

@@ -5,6 +5,12 @@ import { Plus, ChevronRight, Loader2 } from "lucide-react";
 import { reconciliationRunsApi, uploadsApi } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  RUN_STATUS_LABELS,
+  FILE_CATEGORY_LABELS,
+  NORMALIZATION_STATUS_LABELS,
+  formatLabel
+} from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/runs/")({
   head: () => ({ meta: [{ title: "Reconciliation runs · ReconPilot" }] }),
@@ -79,7 +85,7 @@ function RunsPage() {
                   <div className="font-medium">{r.name}</div>
                   <div className="text-[11px] text-muted-foreground">{r.id}</div>
                 </Td>
-                <Td><Badge tone={statusTone(r.status)}>{r.status}</Badge></Td>
+                <Td><Badge tone={statusTone(r.status)}>{formatLabel(r.status, RUN_STATUS_LABELS)}</Badge></Td>
                 <Td className="text-right tabular-nums">2</Td>
                 <Td className="text-right tabular-nums">{r.matched_count.toLocaleString()}</Td>
                 <Td className="text-right tabular-nums text-destructive font-medium">{r.exception_count}</Td>
@@ -130,9 +136,9 @@ function RunsPage() {
                   />
                   <div className="flex-1 min-w-0 text-[13px]">
                     <div className="font-medium truncate">{u.file_name}</div>
-                    <div className="text-[11px] text-muted-foreground">{u.file_category}</div>
+                    <div className="text-[11px] text-muted-foreground">{formatLabel(u.file_category, FILE_CATEGORY_LABELS)}</div>
                   </div>
-                  <Badge tone={statusTone(u.status)}>{u.status}</Badge>
+                  <Badge tone={statusTone(u.status)}>{formatLabel(u.status, NORMALIZATION_STATUS_LABELS)}</Badge>
                 </label>
               ))}
               {normalizedFiles.length === 0 && (
