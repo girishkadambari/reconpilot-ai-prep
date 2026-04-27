@@ -239,7 +239,7 @@ function RunDetail() {
         )}
       </div>
       <Dialog open={!!drawer} onOpenChange={(open) => !open && setDrawer(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-7xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
           <div className="h-full overflow-y-auto">
             {evidenceLoading ? (
               <div className="flex justify-center py-20"><Loader2 className="animate-spin text-muted-foreground" /></div>

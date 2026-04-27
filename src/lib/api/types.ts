@@ -145,6 +145,7 @@ export interface ExceptionItem {
   currency: string;
   status: "OPEN" | "RESOLVED" | "IGNORED";
   ai_explanation: string | null;
+  note: string | null;
 }
 
 export interface RunSummary {

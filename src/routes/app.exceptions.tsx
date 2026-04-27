@@ -178,7 +178,7 @@ function ExceptionsPage() {
         </Table>
       )}
       <Dialog open={!!drawer} onOpenChange={(open) => !open && setDrawer(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-7xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
           {drawer && (
             <ExceptionDetails
               exception={exceptions.find(x => x.id === drawer)!}
