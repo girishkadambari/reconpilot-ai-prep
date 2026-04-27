@@ -53,6 +53,11 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  if (typeof window === "undefined") {
+    // If we are on the server, we can't easily check URL params here without the request object
+    // but this is a good place to see if we can at least render a basic string
+  }
+
   return (
     <html lang="en">
       <head>

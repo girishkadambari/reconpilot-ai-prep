@@ -1,0 +1,10 @@
+name = "reconpilot-ai-prep"
+compatibility_date = "2024-04-27"
+compatibility_flags = ["nodejs_compat"]
+
+[site]
+bucket = "./dist/client"
+
+[build]
+command = "npm run build"
+path = "dist/tanstack_start_app"
