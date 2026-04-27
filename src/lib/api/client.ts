@@ -35,28 +35,44 @@ class ApiClient {
   }
 
   async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "GET",
-      headers: this.getHeaders(),
-    });
-    return this.handleResponse<T>(response);
+    try {
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      return await this.handleResponse<T>(response);
+    } catch (error) {
+      // If we're on the server, don't crash the whole page, just return empty
+      if (typeof window === "undefined") {
+        console.error(`SSR Fetch failed for ${path}:`, error);
+        return {} as T;
+      }
+      throw error;
+    }
   }
 
   async getWithResponse<T>(path: string): Promise<ApiResponse<T>> {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "GET",
-      headers: this.getHeaders(),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error: ApiError & { status?: number } = {
-        error: json.error || { code: "UNKNOWN_ERROR", message: "An unexpected error occurred", details: {} },
-        request_id: json.request_id || response.headers.get("X-Request-ID") || "unknown",
-        status: response.status,
-      };
+    try {
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error: ApiError & { status?: number } = {
+          error: json.error || { code: "UNKNOWN_ERROR", message: "An unexpected error occurred", details: {} },
+          request_id: json.request_id || response.headers.get("X-Request-ID") || "unknown",
+          status: response.status,
+        };
+        throw error;
+      }
+      return json as ApiResponse<T>;
+    } catch (error) {
+      if (typeof window === "undefined") {
+        return { data: {} as T, status: "error" } as any;
+      }
       throw error;
     }
-    return json as ApiResponse<T>;
   }
 
   async post<T>(path: string, data?: any): Promise<T> {
