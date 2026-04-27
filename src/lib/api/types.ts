@@ -1,5 +1,5 @@
 /**
- * ReconPilot API v0.3 Types
+ * SettleProof API v0.3 Types
  * Synchronized with backend openapi.json
  */
 

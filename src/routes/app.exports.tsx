@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/exports")({
-  head: () => ({ meta: [{ title: "Exports · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Exports · SettleProof" }] }),
   component: ExportsPage,
 });
 

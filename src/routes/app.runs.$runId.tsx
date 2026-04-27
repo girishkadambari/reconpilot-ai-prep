@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { ExceptionDetails } from "@/components/app/ExceptionDetails";
 
 export const Route = createFileRoute("/app/runs/$runId")({
-  head: () => ({ meta: [{ title: "Run detail · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Run detail · SettleProof" }] }),
   component: RunDetail,
 });
 

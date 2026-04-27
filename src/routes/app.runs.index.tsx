@@ -13,7 +13,7 @@ import {
 } from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/runs/")({
-  head: () => ({ meta: [{ title: "Reconciliation runs · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Reconciliation runs · SettleProof" }] }),
   component: RunsPage,
 });
 

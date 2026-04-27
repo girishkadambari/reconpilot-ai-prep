@@ -9,9 +9,9 @@ import { Loader2 } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ReconPilot — AI-assisted reconciliation for finance teams" },
-      { name: "description", content: "ReconPilot reconciles Stripe, Razorpay, Chargebee and bank statements. AI prepares reconciliation. Your accountant approves exceptions." },
-      { property: "og:title", content: "ReconPilot — AI-assisted reconciliation" },
+      { title: "SettleProof — AI-assisted reconciliation for finance teams" },
+      { name: "description", content: "SettleProof reconciles Stripe, Razorpay, Chargebee and bank statements. AI prepares reconciliation. Your accountant approves exceptions." },
+      { property: "og:title", content: "SettleProof — AI-assisted reconciliation" },
       { property: "og:description", content: "AI prepares reconciliation. Your accountant approves exceptions." },
     ],
   }),
@@ -48,8 +48,8 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
       <header className="h-16 px-6 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-foreground text-white grid place-items-center text-[11px] font-semibold">RP</div>
-        <span className="text-[14px] font-semibold tracking-tight">ReconPilot</span>
+        <div className="w-7 h-7 rounded-lg bg-foreground text-white grid place-items-center text-[11px] font-semibold">SP</div>
+        <span className="text-[14px] font-semibold tracking-tight">SettleProof</span>
       </header>
 
       <div className="flex-1 grid place-items-center px-4">
@@ -58,7 +58,7 @@ function LoginPage() {
             <div className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full border border-border bg-white text-[11.5px] text-muted-foreground mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" /> Built for finance & accounting
             </div>
-            <h1 className="text-[28px] font-semibold tracking-tight leading-tight">Welcome to ReconPilot</h1>
+            <h1 className="text-[28px] font-semibold tracking-tight leading-tight">Welcome to SettleProof</h1>
             <p className="text-[13.5px] text-muted-foreground mt-2 max-w-[340px] mx-auto">
               AI prepares reconciliation. Your accountant approves exceptions.
             </p>
@@ -85,7 +85,7 @@ function LoginPage() {
       </div>
 
       <footer className="py-5 text-center text-[11.5px] text-muted-foreground">
-        © 2025 ReconPilot · request_id surfaced on all errors for support
+        © 2025 SettleProof · request_id surfaced on all errors for support
       </footer>
 
       {authLoading && (

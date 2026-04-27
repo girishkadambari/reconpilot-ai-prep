@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Plus, Send, UserPlus, Users, Settings, Loader2, Pencil, Trash2, Globe, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/app/workspaces")({
-  head: () => ({ meta: [{ title: "Workspaces · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Workspaces · SettleProof" }] }),
   component: WorkspacesPage,
 });
 

@@ -31,14 +31,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ReconPilot" },
+      { title: "SettleProof" },
       { name: "description", content: "AI-assisted reconciliation worker for finance and accounting teams." },
-      { name: "author", content: "ReconPilot" },
-      { property: "og:title", content: "ReconPilot" },
+      { name: "author", content: "SettleProof" },
+      { property: "og:title", content: "SettleProof" },
       { property: "og:description", content: "AI prepares reconciliation. Your accountant approves exceptions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@ReconPilot" },
+      { name: "twitter:site", content: "@SettleProof" },
     ],
     links: [
       {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/app/column-mapping")({
-  head: () => ({ meta: [{ title: "Column Mapping · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Column Mapping · SettleProof" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     fileId: (search.fileId as string) || "",
   }),

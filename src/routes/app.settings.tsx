@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { AlertTriangle, Trash2, Save, RotateCcw, CreditCard, Zap, Globe, Building2, BookOpen, Activity } from "lucide-react";
 
 export const Route = createFileRoute("/app/settings")({
-  head: () => ({ meta: [{ title: "Settings · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Settings · SettleProof" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     tab: (search.tab as string) || "profile",
   }),
@@ -300,11 +300,11 @@ function SettingsPage() {
               <div className="text-[14.5px] font-semibold mb-4">API Access</div>
               <div className="max-w-2xl space-y-4">
                 <Field label="API base URL">
-                  <Input value={import.meta.env.VITE_API_BASE_URL || "https://api.reconpilot.io"} disabled />
+                  <Input value={import.meta.env.VITE_API_BASE_URL || "https://api.settleproof.com"} disabled />
                 </Field>
                 <Field label="API Key" hint="Use this key to authenticate your server-side requests.">
                   <div className="flex gap-2">
-                    <Input value="rp_live_7x9w2v8b...3m4p" type="password" disabled className="font-mono" />
+                    <Input value="sp_live_7x9w2v8b...3m4p" type="password" disabled className="font-mono" />
                     <Btn variant="secondary">Copy</Btn>
                   </div>
                 </Field>

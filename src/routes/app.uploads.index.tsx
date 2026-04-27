@@ -12,7 +12,7 @@ import {
 } from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/uploads/")({
-  head: () => ({ meta: [{ title: "Uploads · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Uploads · SettleProof" }] }),
   component: UploadsPage,
 });
 

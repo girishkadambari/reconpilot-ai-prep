@@ -22,7 +22,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen grid place-items-center bg-[#FAFAFA]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
-          <div className="text-[13px] text-muted-foreground animate-pulse">Loading ReconPilot...</div>
+          <div className="text-[13px] text-muted-foreground animate-pulse">Loading SettleProof...</div>
         </div>
       </div>
     );

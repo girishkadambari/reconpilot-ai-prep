@@ -98,9 +98,9 @@ export function Shell() {
       {/* Sidebar */}
       <aside className="w-64 shrink-0 bg-white border-r border-border flex flex-col relative">
         <div className="px-5 h-16 flex items-center gap-2 border-b border-border">
-          <div className="w-7 h-7 rounded-lg bg-foreground text-white grid place-items-center text-[11px] font-semibold">RP</div>
+          <div className="w-7 h-7 rounded-lg bg-foreground text-white grid place-items-center text-[11px] font-semibold">SP</div>
           <div className="leading-tight">
-            <div className="text-[14px] font-semibold tracking-tight">ReconPilot</div>
+            <div className="text-[14px] font-semibold tracking-tight">SettleProof</div>
             <div className="text-[11px] text-muted-foreground">AI reconciliation</div>
           </div>
         </div>

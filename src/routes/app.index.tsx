@@ -9,7 +9,7 @@ import {
 } from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/")({
-  head: () => ({ meta: [{ title: "Dashboard · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · SettleProof" }] }),
   component: Dashboard,
 });
 

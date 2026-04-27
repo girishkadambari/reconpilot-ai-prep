@@ -15,7 +15,7 @@ import {
 } from "@/lib/utils/formatters";
 
 export const Route = createFileRoute("/app/exceptions")({
-  head: () => ({ meta: [{ title: "Exceptions · ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "Exceptions · SettleProof" }] }),
   component: ExceptionsPage,
 });
 

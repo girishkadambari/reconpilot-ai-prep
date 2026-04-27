@@ -3,7 +3,7 @@ import { Shell } from "@/components/app/Shell";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const Route = createFileRoute("/app")({
-  head: () => ({ meta: [{ title: "ReconPilot" }] }),
+  head: () => ({ meta: [{ title: "SettleProof" }] }),
   component: () => (
     <AuthGuard>
       <Shell />
