@@ -13,7 +13,11 @@ export default defineConfig(({ mode }) => {
       port: 3001,
     },
     plugins: [
-      tanstackStart(),
+      tanstackStart({
+        deployment: {
+          target: "cloudflare-pages",
+        },
+      }),
       react(),
       tailwindcss(),
       tsconfigPaths(),
