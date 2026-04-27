@@ -9,7 +9,7 @@ class ApiClient {
       headers.append("Content-Type", contentType);
     }
 
-    const token = localStorage.getItem("rp_auth_token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("rp_auth_token") : null;
     if (token) {
       headers.append("Authorization", `Bearer ${token}`);
     }
