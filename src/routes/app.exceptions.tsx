@@ -28,6 +28,7 @@ function ExceptionsPage() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -44,6 +45,20 @@ function ExceptionsPage() {
   const exceptions = response?.data || [];
   const stats = response?.stats || { open: 0, critical: 0, exposure: 0, auto_resolvable: 0 };
   const pagination = response?.pagination;
+
+  const handleDirectResolve = async (e: any) => {
+    try {
+      setResolvingId(e.id);
+      await reconciliationRunsApi.resolveException(e.run_id, e.id, 'RESOLVED', "Approved directly from list");
+      toast.success("Anomaly resolved");
+      queryClient.invalidateQueries({ queryKey: ["global-exceptions"] });
+      queryClient.invalidateQueries({ queryKey: ["global-exception-count"] });
+    } catch (err) {
+      toast.error("Failed to resolve anomaly");
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   return (
     <PageContainer>
@@ -122,60 +137,71 @@ function ExceptionsPage() {
           <div className="text-[14px] font-medium text-muted-foreground">No exceptions found matching your filters.</div>
         </Card>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>Type</Th>
-              <Th>Severity</Th>
-              <Th className="text-right">Amount</Th>
-              <Th>AI Explanation</Th>
-              <Th>Status</Th>
-              <Th></Th>
-            </tr>
-          </thead>
-          <tbody>
-            {exceptions.map(e => (
-              <tr key={e.id} className="hover:bg-[#FAFAFA] group">
-                <Td>
-                  <div className="flex flex-col gap-0.5">
-                    <Badge tone="neutral">{formatLabel(e.exception_type, EXCEPTION_TYPE_LABELS)}</Badge>
-                    <div className="flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[80px]">{e.id}</span>
-                      <CopyButton text={e.id} className="scale-75" />
-                    </div>
-                  </div>
-                </Td>
-                <Td><Badge tone={severityTone(e.severity)}>{formatLabel(e.severity, SEVERITY_LABELS)}</Badge></Td>
-                <Td className="text-right tabular-nums font-medium whitespace-nowrap">
-                  ₹{e.amount.toLocaleString()} <span className="text-muted-foreground text-[11px] font-normal">{e.currency}</span>
-                </Td>
-                <Td className="text-muted-foreground max-w-md">
-                  <div className="line-clamp-2 text-[12.5px] italic">
-                    {e.ai_explanation || "No AI explanation available yet. Click explain to generate."}
-                  </div>
-                </Td>
-                <Td><Badge tone={statusTone(e.status)}>{formatLabel(e.status, EXCEPTION_STATUS_LABELS)}</Badge></Td>
-                <Td className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Btn size="sm" variant="ghost" onClick={() => setDrawer(e.id)}>View</Btn>
-                    <Btn
-                      size="sm"
-                      variant="secondary"
-                      title="Explain with AI"
-                      onClick={() => reconciliationRunsApi.explainException(e.run_id, e.id, true).then(() => {
-                        toast.success("AI explanation refreshed");
-                        queryClient.invalidateQueries({ queryKey: ["global-exceptions"] });
-                      })}
-                    >
-                      <Sparkles className="size-3.5" />
-                    </Btn>
-                    <Btn size="sm" disabled={e.status !== 'OPEN'}>Resolve</Btn>
-                  </div>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <div className="bg-white border border-border rounded-[12px] overflow-hidden flex flex-col h-[calc(100vh-340px)]">
+          <div className="overflow-auto flex-1 no-scrollbar">
+            <Table>
+              <thead className="sticky top-0 z-20">
+                <tr>
+                  <Th>Type</Th>
+                  <Th>Severity</Th>
+                  <Th className="text-right">Amount</Th>
+                  <Th>AI Explanation</Th>
+                  <Th>Status</Th>
+                  <Th></Th>
+                </tr>
+              </thead>
+              <tbody>
+                {exceptions.map(e => (
+                  <tr key={e.id} className="hover:bg-[#FAFAFA] group">
+                    <Td>
+                      <div className="flex flex-col gap-0.5">
+                        <Badge tone="neutral">{formatLabel(e.exception_type, EXCEPTION_TYPE_LABELS)}</Badge>
+                        <div className="flex items-center gap-1 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[80px]">{e.id}</span>
+                          <CopyButton text={e.id} className="scale-75" />
+                        </div>
+                      </div>
+                    </Td>
+                    <Td><Badge tone={severityTone(e.severity)}>{formatLabel(e.severity, SEVERITY_LABELS)}</Badge></Td>
+                    <Td className="text-right tabular-nums font-medium whitespace-nowrap">
+                      ₹{e.amount.toLocaleString()} <span className="text-muted-foreground text-[11px] font-normal">{e.currency}</span>
+                    </Td>
+                    <Td className="text-muted-foreground max-w-md">
+                      <div className="line-clamp-2 text-[12.5px] italic">
+                        {e.ai_explanation || "No AI explanation available yet. Click explain to generate."}
+                      </div>
+                    </Td>
+                    <Td><Badge tone={statusTone(e.status)}>{formatLabel(e.status, EXCEPTION_STATUS_LABELS)}</Badge></Td>
+                    <Td className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Btn size="sm" variant="ghost" onClick={() => setDrawer(e.id)}>View</Btn>
+                        <Btn
+                          size="sm"
+                          variant="secondary"
+                          title="Explain with AI"
+                          onClick={() => reconciliationRunsApi.explainException(e.run_id, e.id, true).then(() => {
+                            toast.success("AI explanation refreshed");
+                            queryClient.invalidateQueries({ queryKey: ["global-exceptions"] });
+                          })}
+                        >
+                          <Sparkles className="size-3.5" />
+                        </Btn>
+                        <Btn
+                          size="sm"
+                          disabled={e.status !== 'OPEN' || resolvingId === e.id}
+                          loading={resolvingId === e.id}
+                          onClick={() => handleDirectResolve(e)}
+                        >
+                          Resolve
+                        </Btn>
+                      </div>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </div>
       )}
       <Dialog open={!!drawer} onOpenChange={(open) => !open && setDrawer(null)}>
         <DialogContent className="max-w-7xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">

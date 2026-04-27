@@ -8,10 +8,10 @@ import { useAuth } from "@/components/auth/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { uploadsApi, workspacesApi, reconciliationRunsApi } from "@/lib/api";
 import { toast } from "sonner";
-import { 
-  EVENT_TYPE_LABELS, 
-  ENTITY_TYPE_LABELS, 
-  formatLabel 
+import {
+  EVENT_TYPE_LABELS,
+  ENTITY_TYPE_LABELS,
+  formatLabel
 } from "@/lib/utils/formatters";
 
 const NAV: { to: string; label: string; icon: any; exact?: boolean }[] = [
@@ -94,9 +94,9 @@ export function Shell() {
   if (!user || !workspace) return null;
 
   return (
-    <div className="min-h-screen flex bg-[#FAFAFA]">
+    <div className="h-screen flex bg-[#FAFAFA] overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-white border-r border-border flex flex-col relative">
+      <aside className="w-64 shrink-0 bg-white border-r border-border flex flex-col relative overflow-hidden">
         <div className="px-5 h-16 flex items-center gap-2 border-b border-border">
           <div className="w-7 h-7 rounded-lg bg-foreground text-white grid place-items-center text-[11px] font-semibold">SP</div>
           <div className="leading-tight">
@@ -340,7 +340,7 @@ export function Shell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 overflow-y-auto scroll-smooth">
           <Outlet />
         </main>
       </div>
