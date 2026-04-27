@@ -4,7 +4,3 @@ compatibility_flags = ["nodejs_compat"]
 
 [site]
 bucket = "./dist/client"
-
-[build]
-command = "npm run build"
-path = "dist/tanstack_start_app"

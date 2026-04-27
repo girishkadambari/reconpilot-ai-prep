@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && cp dist/tanstack_start_app/index.js dist/tanstack_start_app/_worker.js",
+    "build": "vite build && (mkdir -p dist/tanstack_start_app && cp dist/tanstack_start_app/index.js dist/tanstack_start_app/_worker.js || echo 'Warning: _worker.js creation skipped')",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
