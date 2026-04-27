@@ -3,5 +3,5 @@
   "name": "settleproof",
   "compatibility_date": "2024-04-27",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "./dist/client"
+  "main": "./dist/tanstack_start_app/index.js"
 }
