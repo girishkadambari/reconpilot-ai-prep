@@ -71,7 +71,9 @@ export type FileCategory =
   | "RAZORPAY_REPORT"
   | "STRIPE_REPORT"
   | "BANK_STATEMENT"
-  | "INVOICE_EXPORT";
+  | "INVOICE_EXPORT"
+  | "RAZORPAY_SETTLEMENT"
+  | "STRIPE_PAYOUT";
 
 export type NormalizationStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
 

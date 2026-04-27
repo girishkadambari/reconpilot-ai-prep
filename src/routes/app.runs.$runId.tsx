@@ -77,6 +77,17 @@ function RunDetail() {
     },
   });
 
+  const explainAllMutation = useMutation({
+    mutationFn: () => reconciliationRunsApi.explainAll(runId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["run-exceptions", runId] });
+      toast.success("AI explanations generated for all open exceptions");
+    },
+    onError: (err: any) => {
+      toast.error(err?.error?.message || "Failed to generate explanations");
+    },
+  });
+
   if (runLoading || !run) return <div className="p-20 flex justify-center"><Loader2 className="animate-spin" /></div>;
 
   return (
@@ -92,7 +103,7 @@ function RunDetail() {
             <Btn variant="secondary" onClick={() => executeMutation.mutate()} loading={executeMutation.isPending} disabled={run.status === "PROCESSING"}>
               <Play className="size-4" /> Run reconciliation
             </Btn>
-            <Btn variant="secondary" onClick={() => reconciliationRunsApi.explainAll(runId).then(() => toast.success("Batch explanation started"))}>
+            <Btn variant="secondary" onClick={() => explainAllMutation.mutate()} loading={explainAllMutation.isPending} disabled={run.status !== "COMPLETED"}>
               <Sparkles className="size-4" /> Explain all exceptions
             </Btn>
             <Btn onClick={() => exportMutation.mutate()} loading={exportMutation.isPending}>
@@ -311,42 +322,67 @@ function RunDetail() {
 }
 
 function ExceptionTable({ exceptions, runId, onUpdate, onView }: { exceptions: any[]; runId: string; onUpdate: () => void; onView: (id: string) => void }) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    const next = new Set(expandedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpandedIds(next);
+  };
+
   return (
     <Table>
       <thead>
         <tr>
           <Th>Type</Th><Th>Severity</Th><Th className="text-right">Amount</Th>
-          <Th>Status</Th><Th>AI Explanation</Th><Th></Th>
+          <Th>Status</Th><Th className="w-[400px]">AI Explanation</Th><Th></Th>
         </tr>
       </thead>
       <tbody>
-        {exceptions.map(e => (
-          <tr key={e.id} className="hover:bg-[#FAFAFA]">
-            <Td><Badge tone="neutral">{e.exception_type}</Badge></Td>
-            <Td><Badge tone={severityTone(e.severity)}>{e.severity}</Badge></Td>
-            <Td className="text-right tabular-nums font-medium text-[13.5px]">
-              ₹{(e.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              <span className="text-muted-foreground text-[11px] ml-1">{e.currency}</span>
-            </Td>
-            <Td><Badge tone={statusTone(e.status)}>{e.status}</Badge></Td>
-            <Td className="text-muted-foreground max-w-sm">
-              {e.ai_explanation ? (
-                <div className="line-clamp-2 italic text-[12px]">"{e.ai_explanation.substring(0, 80)}..."</div>
-              ) : (
-                <div className="text-[11px] text-muted-foreground">No explanation yet</div>
-              )}
-            </Td>
-            <Td className="text-right">
-              <div className="flex items-center justify-end gap-1">
-                <Btn size="sm" variant="ghost" onClick={() => onView(e.id)}>View</Btn>
-                <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.explainException(runId, e.id).then(() => onUpdate())}>
-                  <Sparkles className="size-3.5" /> Explain
-                </Btn>
-                <Btn size="sm" onClick={() => reconciliationRunsApi.resolveException(runId, e.id, "RESOLVED").then(() => onUpdate())}>Resolve</Btn>
-              </div>
-            </Td>
-          </tr>
-        ))}
+        {exceptions.map(e => {
+          const isExpanded = expandedIds.has(e.id);
+          return (
+            <tr key={e.id} className="hover:bg-[#FAFAFA] align-top">
+              <Td><Badge tone="neutral">{e.exception_type}</Badge></Td>
+              <Td><Badge tone={severityTone(e.severity)}>{e.severity}</Badge></Td>
+              <Td className="text-right tabular-nums font-medium text-[13.5px]">
+                ₹{(e.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="text-muted-foreground text-[11px] ml-1">{e.currency}</span>
+              </Td>
+              <Td><Badge tone={statusTone(e.status)}>{e.status}</Badge></Td>
+              <Td className="text-muted-foreground">
+                {e.ai_explanation ? (
+                  <div className="space-y-1">
+                    <div
+                      className={`italic text-[12px] leading-relaxed cursor-pointer hover:text-foreground transition-colors ${isExpanded ? "" : "line-clamp-2"}`}
+                      onClick={() => toggleExpand(e.id)}
+                    >
+                      "{e.ai_explanation}"
+                    </div>
+                    <button
+                      onClick={() => toggleExpand(e.id)}
+                      className="text-[10px] font-bold uppercase tracking-wider text-[#7C3AED] hover:underline"
+                    >
+                      {isExpanded ? "Show less" : "Show more"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-muted-foreground">No explanation yet</div>
+                )}
+              </Td>
+              <Td className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Btn size="sm" variant="ghost" onClick={() => onView(e.id)}>View</Btn>
+                  <Btn size="sm" variant="secondary" onClick={() => reconciliationRunsApi.explainException(runId, e.id).then(() => onUpdate())}>
+                    <Sparkles className="size-3.5" /> Explain
+                  </Btn>
+                  <Btn size="sm" onClick={() => reconciliationRunsApi.resolveException(runId, e.id, "RESOLVED").then(() => onUpdate())}>Resolve</Btn>
+                </div>
+              </Td>
+            </tr>
+          );
+        })}
       </tbody>
     </Table>
   );

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/app/uploads/")({
   component: UploadsPage,
 });
 
-const CATS: FileCategory[] = ["STRIPE_REPORT", "RAZORPAY_REPORT", "CHARGEBEE_INVOICE_EXPORT", "CHARGEBEE_TRANSACTION_EXPORT", "BANK_STATEMENT", "INVOICE_EXPORT"];
+const CATS: FileCategory[] = ["STRIPE_REPORT", "RAZORPAY_REPORT", "RAZORPAY_SETTLEMENT", "STRIPE_PAYOUT", "CHARGEBEE_INVOICE_EXPORT", "CHARGEBEE_TRANSACTION_EXPORT", "BANK_STATEMENT", "INVOICE_EXPORT"];
 
 function UploadsPage() {
   const [open, setOpen] = useState(false);

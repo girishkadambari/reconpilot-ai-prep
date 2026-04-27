@@ -18,6 +18,7 @@ const BANK_FIELDS = ["utr", "reference", "narration", "credit_amount", "debit_am
 const PAYMENT_FIELDS = ["transaction_id", "payment_id", "order_id", "settlement_id", "payout_id", "invoice_id", "customer_email", "customer_id", "gross_amount", "fee_amount", "tax_amount", "refund_amount", "net_amount", "currency", "status", "gateway", "description", "transaction_date", "settlement_date"];
 const BILLING_FIELDS = ["billing_system", "billing_transaction_id", "billing_invoice_id", "billing_customer_id", "billing_subscription_id", "transaction_id", "invoice_id", "subscription_id", "customer_id", "gateway", "gateway_transaction_id", "gateway_txn_id", "gross_amount", "net_amount", "currency", "status", "transaction_date"];
 const INVOICE_FIELDS = ["invoice_id", "customer_id", "customer_email", "subscription_id", "payment_id", "gateway", "gross_amount", "net_amount", "currency", "status", "invoice_date", "due_date"];
+const SETTLEMENT_FIELDS = ["settlement_id", "payout_id", "utr", "gateway", "gross_amount", "fee_amount", "tax_amount", "refund_amount", "net_amount", "currency", "status", "settlement_date"];
 
 const CATEGORY_FIELDS: Record<string, string[]> = {
   BANK_STATEMENT: BANK_FIELDS,
@@ -26,6 +27,8 @@ const CATEGORY_FIELDS: Record<string, string[]> = {
   CHARGEBEE_INVOICE_EXPORT: BILLING_FIELDS,
   CHARGEBEE_TRANSACTION_EXPORT: BILLING_FIELDS,
   INVOICE_EXPORT: INVOICE_FIELDS,
+  RAZORPAY_SETTLEMENT: SETTLEMENT_FIELDS,
+  STRIPE_PAYOUT: SETTLEMENT_FIELDS,
 };
 
 const ALL_CANONICAL_FIELDS = Array.from(new Set(Object.values(CATEGORY_FIELDS).flat()));

@@ -9,6 +9,8 @@ export const FILE_CATEGORY_LABELS: Record<string, string> = {
   STRIPE_REPORT: "Stripe Payments",
   BANK_STATEMENT: "Bank Statement",
   INVOICE_EXPORT: "Generic Invoices",
+  RAZORPAY_SETTLEMENT: "Razorpay Settlements",
+  STRIPE_PAYOUT: "Stripe Payouts",
 };
 
 export const NORMALIZATION_STATUS_LABELS: Record<string, string> = {
