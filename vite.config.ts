@@ -14,8 +14,9 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       tanstackStart({
-        deployment: {
-          target: "cloudflare-pages",
+        ssr: false,
+        prerender: {
+          enabled: true,
         },
       }),
       react(),
